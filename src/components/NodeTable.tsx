@@ -7,14 +7,17 @@ import { bytes, pct, relativeAge, uptime } from '../utils/format'
 import { deriveUsage, displayName, distroLogo, osLabel, virtLabel } from '../utils/derive'
 import { normalizeCurrency, formatMoney } from '../utils/currency'
 import { cn, loadColor } from '../utils/cn'
+import { billingText, billingClass, type BillingView } from '../hooks/useTrafficBilling'
 import type { Node } from '../types'
 
 interface Props {
   nodes: Node[]
   onOpen?: (uuid: string) => void
+  billing?: Map<string, BillingView>
 }
 
-export function NodeTable({ nodes, onOpen }: Props) {
+export function NodeTable({ nodes, onOpen, billing }: Props) {
+  const hasBilling = !!billing && billing.size > 0
   return (
     <>
       {/* 桌面:表格 */}
@@ -33,6 +36,7 @@ export function NodeTable({ nodes, onOpen }: Props) {
               <TableHead className="text-[11px] uppercase tracking-wider">磁盘</TableHead>
               <TableHead className="text-right text-[11px] uppercase tracking-wider">下行</TableHead>
               <TableHead className="text-right text-[11px] uppercase tracking-wider">上行</TableHead>
+              {hasBilling && <TableHead className="hidden lg:table-cell text-right text-[11px] uppercase tracking-wider">本月流量</TableHead>}
               <TableHead className="hidden lg:table-cell text-right text-[11px] uppercase tracking-wider">负载</TableHead>
               <TableHead className="hidden xl:table-cell text-right text-[11px] uppercase tracking-wider">读写</TableHead>
               <TableHead className="hidden xl:table-cell text-right text-[11px] uppercase tracking-wider">连接</TableHead>
@@ -48,6 +52,7 @@ export function NodeTable({ nodes, onOpen }: Props) {
               const virt = virtLabel(n)
               const os = osLabel(n)
               const m = n.meta
+              const b = billing?.get(n.uuid)
               const monthly = m && m.price > 0
                 ? formatMoney((m.price / (m.priceCycle > 0 ? m.priceCycle : 30)) * 30, normalizeCurrency(m.priceUnit))
                 : '—'
@@ -96,6 +101,17 @@ export function NodeTable({ nodes, onOpen }: Props) {
                   <TableCell className="text-right font-mono text-xs whitespace-nowrap text-orange-500">
                     {bytes(u.netOut || 0)}/s
                   </TableCell>
+                  {hasBilling && (
+                    <TableCell
+                      className={cn(
+                        'hidden lg:table-cell text-right font-mono text-xs whitespace-nowrap',
+                        b?.enabled ? billingClass(b) : 'text-muted-foreground',
+                      )}
+                      title={b?.enabled ? '本计费周期已用流量' : '未开启流量监控'}
+                    >
+                      {b?.enabled ? billingText(b) : '—'}
+                    </TableCell>
+                  )}
                   <TableCell className="hidden lg:table-cell text-right font-mono text-xs whitespace-nowrap"
                     title={n.dynamic?.load_one != null ? `负载 ${n.dynamic.load_one.toFixed(2)} / ${(n.dynamic.load_five ?? 0).toFixed(2)} / ${(n.dynamic.load_fifteen ?? 0).toFixed(2)}` : ''}>
                     {n.dynamic?.load_one != null ? n.dynamic.load_one.toFixed(2) : <span className="text-muted-foreground">—</span>}
@@ -134,14 +150,14 @@ export function NodeTable({ nodes, onOpen }: Props) {
       {/* 移动端:卡片堆叠 */}
       <div className="md:hidden space-y-2">
         {nodes.map(n => (
-          <MobileRow key={n.uuid} node={n} onOpen={onOpen} />
+          <MobileRow key={n.uuid} node={n} onOpen={onOpen} billing={billing?.get(n.uuid)} />
         ))}
       </div>
     </>
   )
 }
 
-function MobileRow({ node, onOpen }: { node: Node; onOpen?: (uuid: string) => void }) {
+function MobileRow({ node, onOpen, billing }: { node: Node; onOpen?: (uuid: string) => void; billing?: BillingView }) {
   const u = deriveUsage(node)
   const logo = distroLogo(node)
   const m = node.meta
@@ -171,6 +187,12 @@ function MobileRow({ node, onOpen }: { node: Node; onOpen?: (uuid: string) => vo
         <span className="text-orange-500">↑ {bytes(u.netOut || 0)}/s</span>
         {monthly && <span className="ml-auto text-foreground">{monthly}/月</span>}
       </div>
+      {billing?.enabled && (
+        <div className={cn('flex items-center gap-1.5 text-[11px] font-mono', billingClass(billing))}>
+          <span>本月流量</span>
+          <span className="ml-auto tabular-nums">{billingText(billing)}</span>
+        </div>
+      )}
     </div>
   )
 }

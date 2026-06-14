@@ -3,6 +3,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from './components/ui/alert'
 import { useConfig } from './hooks/useConfig'
 import { useNodes } from './hooks/useNodes'
+import { useTrafficBilling } from './hooks/useTrafficBilling'
 import { Background } from './components/Background'
 import { Navbar } from './components/Navbar'
 import { Footer } from './components/Footer'
@@ -69,6 +70,7 @@ function toBool(v: unknown, fallback = true): boolean {
 function AppInner() {
   const { config, error: configError } = useConfig()
   const { nodes, errors, loading, pool } = useNodes(config)
+  const billing = useTrafficBilling(config)
 
   const [view, setView] = useState<View>(initialView)
   const [sort, setSort] = useState<Sort>(initialSort)
@@ -357,6 +359,7 @@ function AppInner() {
                   cardStyle={cardStyle}
                   showPrice={showPrice}
                   showExpire={showExpire}
+                  billing={billing.get(n.uuid)}
                 />
               </div>
             ))}
@@ -364,7 +367,7 @@ function AppInner() {
         )}
 
         {/* Table View */}
-        {!empty && view === 'table' && <NodeTable nodes={list} onOpen={setSelected} />}
+        {!empty && view === 'table' && <NodeTable nodes={list} onOpen={setSelected} billing={billing} />}
 
         {/* Map View */}
         {!empty && view === 'map' && (

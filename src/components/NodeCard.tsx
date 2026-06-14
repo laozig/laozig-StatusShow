@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ArrowDownUp, Clock, Coins, Gauge, HardDrive, Network, Pin, Timer, type LucideIcon } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowDownUp, CalendarClock, Clock, Coins, Gauge, HardDrive, Network, Pin, Timer, type LucideIcon } from 'lucide-react'
 import { Badge } from './ui/badge'
 import { Card } from './ui/card'
 import { Progress } from './ui/progress'
@@ -10,6 +10,7 @@ import { cn, loadColor } from '../utils/cn'
 import { hasCost, remainingDays } from '../utils/cost'
 import { normalizeCurrency, formatMoney } from '../utils/currency'
 import { usePins } from '../hooks/usePins'
+import { billingText, billingClass, type BillingView } from '../hooks/useTrafficBilling'
 import type { Node } from '../types'
 import type { ReactNode } from 'react'
 
@@ -18,9 +19,10 @@ interface Props {
   cardStyle?: string
   showPrice?: boolean
   showExpire?: boolean
+  billing?: BillingView
 }
 
-export function NodeCard({ node, cardStyle = 'glass', showPrice = true, showExpire = true }: Props) {
+export function NodeCard({ node, cardStyle = 'glass', showPrice = true, showExpire = true, billing }: Props) {
   const u = deriveUsage(node)
   const tags = Array.isArray(node.meta?.tags) ? node.meta.tags : []
   const os = osLabel(node)
@@ -129,6 +131,13 @@ export function NodeCard({ node, cardStyle = 'glass', showPrice = true, showExpi
               <span className="ml-auto tabular-nums">
                 ↓ {bytes(rxTotal)}　↑ {bytes(txTotal)}
               </span>
+            </div>
+          )}
+          {billing?.enabled && (
+            <div className={cn('flex items-center gap-1.5', billingClass(billing))} title="本计费周期已用流量(traffic-billing-worker)">
+              <CalendarClock className="h-3 w-3 shrink-0" />
+              <span className="text-[10px]">本月</span>
+              <span className="ml-auto tabular-nums">{billingText(billing)}</span>
             </div>
           )}
           {load && (
