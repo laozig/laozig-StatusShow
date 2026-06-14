@@ -152,6 +152,55 @@ SITE_2=name="master-2",backend_url="wss://m2.example.com",token="xyz789"
 
 ---
 
+## 🖼️ 展示预览
+
+:::: tabs
+::: tab-item 星云
+![星云主题预览](https://cdn.nodeimage.com/i/Xs93uPQKGTJoIAkCY3V0YyVIEie294wt.png)
+:::
+
+::: tab-item 简洁现代
+![简洁现代主题预览](https://cdn.nodeimage.com/i/zH2G0EG8YRYrwOJubTwly4IGUkZoGJVU.png)
+:::
+
+::: tab-item 科技
+![科技主题预览](https://cdn.nodeimage.com/i/8L6vPDDbnvnhlWCRs52YuPNrPsribO1u.png)
+:::
+
+::: tab-item 未来
+![未来主题预览](https://cdn.nodeimage.com/i/8lfadjVashGP0bZqLZNlCGX21UaboOju.png)
+:::
+
+::: tab-item 像素
+![像素主题预览](https://cdn.nodeimage.com/i/E41aQGpg56oRPpVJsRqVe6Qvpthe2Xyy.png)
+:::
+
+::: tab-item 写实
+![写实主题预览](https://cdn.nodeimage.com/i/6WaUjo5xo7BFvQXjPcccGlRMjMXMxcb4.png)
+:::
+
+::: tab-item 古朴
+![古朴主题预览](https://cdn.nodeimage.com/i/XwgDMM7iuQkQ9IdefhL3pTJe19uMoCoY.png)
+:::
+
+::: tab-item 中世纪
+![中世纪主题预览](https://cdn.nodeimage.com/i/lpipBDT6xIP8Jjac6iWuoCh3eX93IgSF.png)
+:::
+
+::: tab-item 战损
+![战损主题预览](https://cdn.nodeimage.com/i/brL4lJ2cY4FqmoohXMzt4xlKeNIPgOFr.png)
+:::
+
+::: tab-item 世界地图
+![脉冲世界地图预览](https://cdn.nodeimage.com/i/QPlK8dAlaqBAAmy02cQIQyzcf56TYXZ4.png)
+:::
+
+::: tab-item TCP Ping
+![TCP Ping 图表预览](https://cdn.nodeimage.com/i/6CvQrjBsERWc2fneSUkHrmZHVnLoajGC.png)
+:::
+::::
+
+---
 ## 📄 协议与致谢
 
 - 本项目基于 [NodeGet-StatusShow](https://github.com/NodeSeekDev/NodeGet-StatusShow) 二次开发，遵循 **AGPL-3.0** 协议。

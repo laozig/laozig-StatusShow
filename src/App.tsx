@@ -68,7 +68,7 @@ function toBool(v: unknown, fallback = true): boolean {
 
 function AppInner() {
   const { config, error: configError } = useConfig()
-  const { nodes, errors, pool } = useNodes(config)
+  const { nodes, errors, loading, pool } = useNodes(config)
 
   const [view, setView] = useState<View>(initialView)
   const [sort, setSort] = useState<Sort>(initialSort)
@@ -255,18 +255,21 @@ function AppInner() {
   }
 
   const logo = config.user_preferences.site_logo || DEFAULT_LOGO
+  const hasVisibleNodes = regions.total > 0
   const empty = list.length === 0
+  const filterActive = Boolean(query.trim() || activeTag || activeRegion)
+  const initialLoading = loading && !hasVisibleNodes
   const hasErrors = errors.length > 0
 
   return (
     <div className={`min-h-screen flex flex-col ${getDensityClass(density)}`}>
       <Background showParticles={showParticles} />
       <NodeStatusWatcher nodes={nodes} />
-      {!empty && <SideRail nodes={nodes} />}
+      {hasVisibleNodes && <SideRail nodes={nodes} />}
 
       {announcement && <Announcement text={announcement} />}
 
-      {!empty && <LiveTicker nodes={nodes} />}
+      {hasVisibleNodes && <LiveTicker nodes={nodes} />}
 
       <Navbar
       siteName={config.user_preferences.site_name || 'laozig 探针'}
@@ -288,10 +291,10 @@ function AppInner() {
 
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4">
         {/* Global Status Bar */}
-        {!empty && <GlobalStatusBar nodes={nodes} />}
+        {hasVisibleNodes && <GlobalStatusBar nodes={nodes} />}
 
         {/* Network Gauge + Bandwidth Chart side by side */}
-        {!empty && (
+        {hasVisibleNodes && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <NetworkGauge nodes={nodes} />
             <BandwidthChart nodes={nodes} />
@@ -312,11 +315,11 @@ function AppInner() {
         )}
 
         {/* Filters */}
-        {!empty && <RegionFilter regions={regions.list} total={regions.total} active={activeRegion} onChange={setActiveRegion} />}
-        {!empty && <TagFilter tags={allTags} active={activeTag} onChange={setActiveTag} />}
+        {hasVisibleNodes && <RegionFilter regions={regions.list} total={regions.total} active={activeRegion} onChange={setActiveRegion} />}
+        {hasVisibleNodes && <TagFilter tags={allTags} active={activeTag} onChange={setActiveTag} />}
 
         {/* Loading */}
-        {empty && !hasErrors && (
+        {initialLoading && !hasErrors && (
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-2 text-muted-foreground py-1">
               <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -326,7 +329,11 @@ function AppInner() {
           </div>
         )}
 
-        {empty && hasErrors && <div className="py-20 text-center text-muted-foreground">暂无节点</div>}
+        {!initialLoading && empty && (
+          <div className="py-20 text-center text-muted-foreground">
+            {filterActive ? '没有匹配当前筛选条件的节点' : '暂无节点'}
+          </div>
+        )}
 
         {/* Cards View */}
         {!empty && view === 'cards' && (
