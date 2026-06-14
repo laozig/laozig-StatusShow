@@ -8,7 +8,7 @@
 
 ## ✨ 二开特性
 
-- **8 套预设主题**：`nebula` 星云 / `cyberpunk` 赛博朋克 / `aurora` 极光 / `sakura` 樱花 / `terminal` 终端 / `mono` 石墨 / `midnight` 午夜 / `sunset` 日落。每套换字体、圆角、调色板、质感，访客可在页内主题面板实时切换。
+- **9 套预设主题**：`nebula` 星云 / `modern` 简洁现代 / `tech` 科技 / `future` 未来 / `pixel` 像素 / `realistic` 写实 / `antique` 古朴 / `medieval` 中世纪 / `wartorn` 战损。每套换字体、圆角、调色板、质感，访客可在页内主题面板实时切换。
 - **17 种强调色 × 3 种卡片风格**（玻璃 / 经典 / 极简）× 明暗 / 跟随系统。
 - **三视图**：卡片 / 表格 / 脉冲世界地图（`effectScatter` 光点定位、点击弹节点列表）。
 - **费用统计**：实时汇率多币种换算（`open.er-api.com`，24h 缓存，失败回退静态）、月度成本占比、到期预警。
@@ -111,7 +111,7 @@ git push
 | `site_name` | 站点标题 | 任意文本 |
 | `site_logo` | 站点图标链接 | URL，留空用默认 |
 | `footer` | 页脚文本 | 任意文本 |
-| `theme_preset` | 预设主题 | `nebula` / `cyberpunk` / `aurora` / `sakura` / `terminal` / `mono` / `midnight` / `sunset` |
+| `theme_preset` | 预设主题 | `nebula` / `modern` / `tech` / `future` / `pixel` / `realistic` / `antique` / `medieval` / `wartorn` |
 | `accent_color` | 主题强调色 | `cyan` `sky` `blue` `indigo` `violet` `purple` `fuchsia` `pink` `rose` `red` `orange` `amber` `lime` `green` `emerald` `teal` `slate`（共 17） |
 | `card_style` | 卡片风格 | `glass` / `classic` / `minimal` |
 | `show_dashboard` | 顶部节点统计概览 | `true` / `false` |
