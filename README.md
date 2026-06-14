@@ -62,6 +62,17 @@ https://dash.nodeget.com/#/dashboard/theme-management?add=https://YOUR-PROJECT.p
 
 最推荐的方式，方便后续升级。
 
+**前置要求（很重要）：** 本地先同步 `package-lock.json`，确保依赖版本与 `package.json` 一致。CF Pages 用 `npm ci` 进行严格安装，lock 文件不同步会导致构建失败：
+
+```bash
+npm install
+git add package-lock.json
+git commit -m "sync package-lock.json"
+git push
+```
+
+**部署步骤：**
+
 1. 在 Cloudflare Pages / Vercel 新建项目，关联你的仓库 `laozig/laozig-StatusShow`，构建命令 `npm run build`，输出目录 `dist`。
 2. 设定环境变量 `NODEGET_CONFIG`，值是一段有效的 JSON 字符串（示例见下）。
 3. 部署，绑定域名。后续改了代码 push 即自动重新编译。
