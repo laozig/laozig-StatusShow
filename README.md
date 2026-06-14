@@ -66,9 +66,12 @@ git push
 
 **部署步骤：**
 
-1. 在 Cloudflare Pages / Vercel 新建项目，关联你的仓库 `laozig/laozig-StatusShow`，构建命令 `npm run build`，输出目录 `dist`。
-2. 设定环境变量 `NODEGET_CONFIG`，值是一段有效的 JSON 字符串（示例见下）。
-3. 部署，绑定域名。后续改了代码 push 即自动重新编译。
+1. 在 Cloudflare Pages / Vercel 新建项目，关联你的仓库 `laozig/laozig-StatusShow`。
+2. 设置构建配置：
+   - **构建命令**：`npm ci --legacy-peer-deps && npm run build`
+   - **输出目录**：`dist`
+3. 设定环境变量 `NODEGET_CONFIG`，值是一段有效的 JSON 字符串（示例见下）。
+4. 部署，绑定域名。后续改了代码 push 即自动重新编译。
 
 > 环境变量是 **build 时** 注入的，在面板里改完 `NODEGET_CONFIG` 后**必须重新部署一次**才生效，光改不重新 build 没用。
 
