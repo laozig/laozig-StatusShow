@@ -4,7 +4,7 @@
   "description": "laozig 二开 NodeGet 探针主题:页内实时切换 8 套预设主题 / 17 强调色 / 玻璃·经典·极简卡片 / 明暗·跟随系统;实时汇率多币种费用统计、脉冲世界地图、自定义右键菜单、延迟质量分级图表、动态粒子背景。",
   "author": "laozig",
   "repository": "https://github.com/laozig/laozig-StatusShow",
-  "dist_page": "",
+  "dist_page": "https://laozig-statusshow.pages.dev",
   "user_preferences_form": {
     "version": "0.0.2",
     "items": [
