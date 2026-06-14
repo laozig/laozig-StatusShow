@@ -5,22 +5,28 @@ import { Card } from './ui/card'
 import { Flag } from './Flag'
 import { StatusDot } from './StatusDot'
 import { displayName, distroLogo } from '../utils/derive'
+import { useAppearance } from '../hooks/useAppearance'
 import type { Node } from '../types'
 
 const MAP_W = 900
 const MAP_H = 520
-const TINY_DEG = 2
 const GEO_URL = `${import.meta.env.BASE_URL}world.geo.json`
 
-const HEAT = [
-  [254, 215, 170],
-  [251, 146, 60],
-  [194, 65, 12],
-]
+interface Accent { h: number; s: number }
+
+/** 读取当前强调色 HSL(由 data-accent 注入的 --primary) */
+function readAccent(): Accent {
+  if (typeof document === 'undefined') return { h: 189, s: 90 }
+  const raw = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()
+  const parts = raw.split(/\s+/)
+  const h = parseFloat(parts[0])
+  const s = parseFloat(parts[1])
+  return { h: Number.isFinite(h) ? h : 189, s: Number.isFinite(s) ? s : 90 }
+}
 
 const cnameMap = new Map<string, string>()
 const knownA2 = new Set<string>()
-const tinyCenter = new Map<string, [number, number]>()
+const countryCenter = new Map<string, [number, number]>()
 let mapPromise: Promise<void> | null = null
 
 interface CountryEntry {
@@ -70,18 +76,6 @@ function tinyMeta(geometry: any): { center: [number, number]; size: number } | n
   }
 }
 
-function heatColor(t: number) {
-  const x = Math.min(1, Math.max(0, t))
-  const seg = x >= 0.5 ? 1 : 0
-  const f = (x - seg * 0.5) * 2
-  const a = HEAT[seg]
-  const b = HEAT[seg + 1]
-  const r = Math.round(a[0] + (b[0] - a[0]) * f)
-  const g = Math.round(a[1] + (b[1] - a[1]) * f)
-  const c = Math.round(a[2] + (b[2] - a[2]) * f)
-  return `rgb(${r},${g},${c})`
-}
-
 function ensureMap() {
   if (!mapPromise) {
     mapPromise = fetch(GEO_URL)
@@ -93,7 +87,7 @@ function ensureMap() {
           knownA2.add(a2)
           if (f.properties?.cname) cnameMap.set(a2, f.properties.cname)
           const m = tinyMeta(f.geometry)
-          if (m && m.size < TINY_DEG) tinyCenter.set(a2, m.center)
+          if (m) countryCenter.set(a2, m.center)
         }
         echarts.registerMap('world', geo)
       })
@@ -112,6 +106,8 @@ export function WorldMap({ nodes, onOpen }: Props) {
   const [renderA2, setRenderA2] = useState<string | null>(null)
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<echarts.ECharts | null>(null)
+  const { accent: accentCode, preset, mode } = useAppearance()
+  const accent = useMemo<Accent>(() => readAccent(), [accentCode, preset, mode])
 
   useEffect(() => {
     let cancelled = false
@@ -152,6 +148,12 @@ export function WorldMap({ nodes, onOpen }: Props) {
     return { byCountry: map, total }
   }, [nodes])
 
+  const summary = useMemo(() => {
+    let online = 0, offline = 0
+    for (const e of byCountry.values()) { online += e.online; offline += e.offline }
+    return { online, offline, countries: byCountry.size }
+  }, [byCountry])
+
   const dataSig = useMemo(
     () =>
       [...byCountry.entries()]
@@ -166,7 +168,7 @@ export function WorldMap({ nodes, onOpen }: Props) {
     liveRef.current = { byCountry, onOpen }
   })
 
-  const option = useMemo(() => buildOption(byCountry), [dataSig, ready])
+  const option = useMemo(() => buildOption(byCountry, accent), [dataSig, ready, accent.h, accent.s])
 
   useEffect(() => {
     if (!ready || !wrapRef.current) return
@@ -174,13 +176,14 @@ export function WorldMap({ nodes, onOpen }: Props) {
       chartRef.current = echarts.init(wrapRef.current)
       chartRef.current.on('click', (p: any) => {
         const cur = liveRef.current
-        const e = cur.byCountry.get(p.name)
+        const a2 = p?.data?.a2 || p?.name
+        const e = a2 ? cur.byCountry.get(a2) : null
         if (!e) return
         if (e.nodes.length === 1) cur.onOpen?.(e.nodes[0].uuid)
-        else setPickedA2(p.name)
+        else setPickedA2(a2)
       })
     }
-    chartRef.current.setOption(option, false)
+    chartRef.current.setOption(option, true)
   }, [ready, option])
 
   useEffect(() => {
@@ -201,13 +204,27 @@ export function WorldMap({ nodes, onOpen }: Props) {
 
   return (
     <Card className="p-3 sm:p-4">
-      <div className="flex items-center mb-3 px-1">
-        <div className="text-sm font-semibold text-foreground/90">地理位置</div>
+      <div className="flex items-center gap-3 mb-3 px-1 flex-wrap">
+        <div className="text-sm font-semibold">地理分布</div>
+        <div className="flex items-center gap-3 text-xs font-mono ml-auto">
+          <span className="text-muted-foreground">{summary.countries} 地区</span>
+          <span className="inline-flex items-center gap-1 text-emerald-500">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />{summary.online} 在线
+          </span>
+          {summary.offline > 0 && (
+            <span className="inline-flex items-center gap-1 text-muted-foreground">
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />{summary.offline} 离线
+            </span>
+          )}
+        </div>
       </div>
 
       <div
-        className="relative w-full overflow-hidden rounded-md border border-border/60 bg-[hsl(220_15%_8%)]"
-        style={{ aspectRatio: `${MAP_W} / ${MAP_H}` }}
+        className="relative w-full overflow-hidden rounded-xl border border-border/60"
+        style={{
+          aspectRatio: `${MAP_W} / ${MAP_H}`,
+          background: `radial-gradient(120% 90% at 50% -10%, hsl(${accent.h} ${Math.min(accent.s, 60)}% 12%), hsl(${accent.h} 18% 5%))`,
+        }}
       >
         <div ref={wrapRef} className="absolute inset-0" />
 
@@ -246,27 +263,36 @@ export function WorldMap({ nodes, onOpen }: Props) {
   )
 }
 
-function buildOption(byCountry: Map<string, CountryEntry>) {
+function buildOption(byCountry: Map<string, CountryEntry>, accent: Accent) {
   const entries = [...byCountry.entries()].filter(([a2]) => knownA2.has(a2))
-  const data = entries.map(([a2, e]) => ({ name: a2, value: e.online + e.offline }))
-  const max = data.reduce((m, d) => Math.max(m, d.value), 0)
-  const tinyMarkers = entries
+
+  const accentColor = `hsl(${accent.h} ${accent.s}% 56%)`
+  const accentGlow = `hsl(${accent.h} ${accent.s}% 60% / 0.55)`
+
+  // 有节点的国家在底图上轻微高亮,营造层次
+  const regions = entries.map(([a2]) => ({
+    name: a2,
+    itemStyle: { areaColor: `hsl(${accent.h} ${Math.min(accent.s, 70)}% 26%)` },
+  }))
+
+  // 每个国家一个脉冲光点(质心),大小随节点数,全在线=强调色,有离线=琥珀
+  const points = entries
     .map(([a2, e]) => {
-      const c = tinyCenter.get(a2)
+      const c = countryCenter.get(a2)
       if (!c) return null
       const v = e.online + e.offline
-      const t = max > 0 ? v / max : 0
+      const allOnline = e.offline === 0
       return {
-        name: a2,
-        coord: c,
-        value: v,
-        symbolSize: 6 + Math.min(8, Math.log2(v + 1) * 3),
+        name: cnameMap.get(a2) || a2,
+        a2,
+        online: e.online,
+        offline: e.offline,
+        value: [c[0], c[1], v],
+        symbolSize: 7 + Math.min(22, Math.sqrt(v) * 5),
         itemStyle: {
-          color: heatColor(0.35 + 0.65 * t),
-          borderColor: 'rgba(20,22,28,0.85)',
-          borderWidth: 0.8,
-          shadowBlur: 8,
-          shadowColor: 'rgba(251,146,60,0.45)',
+          color: allOnline ? accentColor : '#f59e0b',
+          shadowBlur: 12,
+          shadowColor: allOnline ? accentGlow : 'rgba(245,158,11,0.5)',
         },
       }
     })
@@ -274,68 +300,54 @@ function buildOption(byCountry: Map<string, CountryEntry>) {
 
   return {
     backgroundColor: 'transparent',
-    visualMap: {
-      type: 'continuous' as const,
-      min: max > 1 ? 1 : 0,
-      max: Math.max(max, 2),
-      show: max > 0,
-      seriesIndex: 0,
-      left: 16,
-      bottom: 16,
-      itemWidth: 10,
-      itemHeight: 90,
-      orient: 'horizontal' as const,
-      text: ['多', '少'],
-      textStyle: { color: 'rgba(255,255,255,0.55)', fontSize: 10 },
-      inRange: { color: ['#fed7aa', '#fb923c', '#c2410c'] },
-      outOfRange: { color: 'rgba(148,163,184,0.16)' },
-      calculable: false,
+    geo: {
+      map: 'world',
+      roam: false,
+      zoom: 1.2,
+      layoutCenter: ['50%', '54%'] as [string, string],
+      layoutSize: '128%',
+      selectedMode: false,
+      silent: false,
+      itemStyle: {
+        areaColor: 'rgba(148,163,184,0.08)',
+        borderColor: `hsl(${accent.h} ${accent.s}% 55% / 0.16)`,
+        borderWidth: 0.5,
+      },
+      emphasis: {
+        label: { show: false },
+        itemStyle: { areaColor: `hsl(${accent.h} ${accent.s}% 40%)` },
+      },
+      regions,
     },
     tooltip: {
       trigger: 'item' as const,
-      backgroundColor: 'rgba(20,22,28,0.94)',
-      borderColor: 'rgba(148,163,184,0.3)',
+      backgroundColor: 'rgba(15,18,30,0.95)',
+      borderColor: `hsl(${accent.h} ${accent.s}% 55% / 0.4)`,
       borderWidth: 1,
-      padding: [6, 10] as [number, number],
+      padding: [8, 12] as [number, number],
       textStyle: { color: '#e5e7eb', fontSize: 12 },
       formatter: (p: any) => {
-        const a2 = p.name
-        const cname = cnameMap.get(a2)
-        const head = cname ? `${cname} <span style="color:#94a3b8">${a2}</span>` : a2
-        const e = byCountry.get(a2)
-        if (!e) return `<b>${head}</b><br/><span style="color:#94a3b8">无节点</span>`
-        const offline = e.offline
-          ? ` <span style="color:#94a3b8">· ${e.offline} 离线</span>`
+        const d = p?.data
+        if (!d?.a2) return ''
+        const cname = cnameMap.get(d.a2)
+        const head = cname ? `${cname} <span style="color:#94a3b8">${d.a2}</span>` : d.a2
+        const offline = d.offline
+          ? ` <span style="color:#94a3b8">· ${d.offline} 离线</span>`
           : ''
-        return `<b>${head}</b><br/>${e.online + e.offline} 节点 <span style="color:#34d399">· ${e.online} 在线</span>${offline}`
+        return `<b>${head}</b><br/>${d.online + d.offline} 节点 <span style="color:#34d399">· ${d.online} 在线</span>${offline}`
       },
     },
     series: [
       {
-        type: 'map' as const,
-        map: 'world',
-        roam: false,
-        zoom: 1.15,
-        layoutCenter: ['50%', '50%'] as [string, string],
-        layoutSize: '100%',
-        selectedMode: false,
-        itemStyle: {
-          areaColor: 'rgba(148,163,184,0.16)',
-          borderColor: 'rgba(148,163,184,0.32)',
-          borderWidth: 0.4,
-        },
-        emphasis: {
-          label: { show: false },
-          itemStyle: { areaColor: '#fb923c' },
-        },
-        label: { show: false },
-        data,
-        markPoint: {
-          symbol: 'circle',
-          label: { show: false },
-          emphasis: { label: { show: false }, scale: 1.3 },
-          data: tinyMarkers,
-        },
+        type: 'effectScatter' as const,
+        coordinateSystem: 'geo' as const,
+        geoIndex: 0,
+        zlevel: 2,
+        symbol: 'circle' as const,
+        showEffectOn: 'render' as const,
+        rippleEffect: { brushType: 'stroke' as const, scale: 3.2, period: 4 },
+        emphasis: { scale: 1.4 },
+        data: points,
       },
     ],
   }

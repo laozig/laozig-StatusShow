@@ -90,28 +90,38 @@ export interface Node {
 
 export interface ThemeConfig {
   "name": string
-  "description":string
+  "description": string
   "author"?: string
   "repository"?: string
   "dist_page"?: string;
-  "user_preferences_form":{
-    version:string,
-    items:any[]
+  "user_preferences_form": {
+    version: string,
+    items: any[]
   },
   "version"?: string
   "license"?: string
 }
 
+export interface UserPreferences {
+  site_name?: string
+  site_logo?: string
+  footer?: string
+  show_dashboard?: boolean | string
+  show_price?: boolean | string
+  show_expire?: boolean | string
+  accent_color?: string
+  card_style?: string
+  show_particles?: boolean | string
+  announcement?: string
+  [key: string]: unknown
+}
+
 export interface UserConfig {
-  "user_preferences":{
-    site_name?: string
-    site_logo?: string
-    footer?: string
-  },
-  site_tokens: { 
-    name: string; 
-    backend_url: string; 
-    token: string 
+  "user_preferences": UserPreferences
+  site_tokens: {
+    name: string;
+    backend_url: string;
+    token: string
   }[]
 }
 
@@ -155,6 +165,7 @@ export type Sort =
   | 'netIn'
   | 'netOut'
   | 'uptime'
+  | 'price'
 
 export type LatencyType = 'ping' | 'tcp_ping'
 

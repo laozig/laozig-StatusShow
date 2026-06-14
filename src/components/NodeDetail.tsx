@@ -3,8 +3,8 @@ import { ArrowLeft } from 'lucide-react'
 import {
   Area,
   AreaChart,
-  Line,
-  LineChart,
+  CartesianGrid,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -18,10 +18,12 @@ import { StatusDot } from './StatusDot'
 import { bytes, pct, relativeAge, uptime } from '../utils/format'
 import { deriveUsage, displayName, distroLogo, osLabel, virtLabel } from '../utils/derive'
 import { cycleProgress, hasCost, remainingDays, remainingValue } from '../utils/cost'
+import { normalizeCurrency, formatMoney } from '../utils/currency'
 import { cn, strokeColor } from '../utils/cn'
 import {
   buildLatencyChart,
   computeLatencyStats,
+  latencyQuality,
   type LatencyStats,
 } from '../utils/latency'
 import { useNodeLatency } from '../hooks/useNodeLatency'
@@ -35,6 +37,13 @@ const TOOLTIP_STYLE = {
   fontSize: 11,
 }
 
+const LATENCY_RANGES = [
+  { label: '30 分钟', short: '30分', ms: 30 * 60 * 1000 },
+  { label: '1 小时', short: '1时', ms: 60 * 60 * 1000 },
+  { label: '6 小时', short: '6时', ms: 6 * 60 * 60 * 1000 },
+  { label: '24 小时', short: '24时', ms: 24 * 60 * 60 * 1000 },
+]
+
 interface Props {
   node: Node | null
   onClose: () => void
@@ -46,6 +55,8 @@ export function NodeDetail({ node, onClose, showSource, pool }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const [stuck, setStuck] = useState(false)
+  const [rangeIdx, setRangeIdx] = useState(1) // 默认 1 小时
+  const range = LATENCY_RANGES[rangeIdx]
 
   useEffect(() => {
     if (!node) return
@@ -77,6 +88,7 @@ export function NodeDetail({ node, onClose, showSource, pool }: Props) {
     pool,
     node?.source ?? null,
     node?.uuid ?? null,
+    range.ms,
   )
 
   if (!node) return null
@@ -205,8 +217,19 @@ export function NodeDetail({ node, onClose, showSource, pool }: Props) {
           rows={tcpData}
           type="tcp_ping"
           loading={latencyLoading}
+          rangeLabel={range.label}
+          rangeIdx={rangeIdx}
+          onRangeIdx={setRangeIdx}
         />
-        <LatencyBlock title="Ping" rows={pingData} type="ping" loading={latencyLoading} />
+        <LatencyBlock
+          title="Ping"
+          rows={pingData}
+          type="ping"
+          loading={latencyLoading}
+          rangeLabel={range.label}
+          rangeIdx={rangeIdx}
+          onRangeIdx={setRangeIdx}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Section title="系统">
@@ -367,17 +390,30 @@ interface LatencyBlockProps {
   rows: TaskQueryResult[]
   type: LatencyType
   loading: boolean
+  rangeLabel: string
+  rangeIdx: number
+  onRangeIdx: (i: number) => void
 }
 
 const ms = (v: number) => `${v.toFixed(1)} ms`
+const slug = (name: string) => name.replace(/[^a-zA-Z0-9_-]/g, '_')
 
-function LatencyBlock({ title, rows, type, loading }: LatencyBlockProps) {
+function lastValue(data: ReturnType<typeof buildLatencyChart>['data'], name: string): number | null {
+  for (let i = data.length - 1; i >= 0; i--) {
+    const v = data[i][name]
+    if (typeof v === 'number') return v
+  }
+  return null
+}
+
+function LatencyBlock({ title, rows, type, loading, rangeLabel, rangeIdx, onRangeIdx }: LatencyBlockProps) {
   const { data, series } = useMemo(() => buildLatencyChart(rows, type), [rows, type])
   const stats = useMemo(() => computeLatencyStats(rows, type), [rows, type])
   const [hidden, setHidden] = useState<Set<string>>(() => new Set())
   const empty = data.length === 0
 
   const visibleSeries = series.filter(s => !hidden.has(s.name))
+  const single = visibleSeries.length === 1
 
   const toggle = (name: string) =>
     setHidden(prev => {
@@ -387,9 +423,55 @@ function LatencyBlock({ title, rows, type, loading }: LatencyBlockProps) {
       return next
     })
 
+  // 头部概览:单来源取最新值,多来源取最优来源的平均
+  const primaryStat = stats.find(s => !hidden.has(s.name)) ?? stats[0]
+  const headline = single
+    ? lastValue(data, visibleSeries[0].name)
+    : (primaryStat?.avg ?? null)
+  const q = latencyQuality(headline)
+  const avgForRef = single ? (stats.find(s => s.name === visibleSeries[0].name)?.avg ?? null) : null
+
   return (
-    <Section title={`${title} · 近 1 小时`}>
-      <div className="relative h-60">
+    <Section title={`${title} · 近 ${rangeLabel}`}>
+      {/* 概览:当前/代表延迟 + 质量分级 + 时间范围 */}
+      <div className="flex items-center justify-between flex-wrap gap-2 -mt-1 mb-3">
+        <div className="flex items-baseline gap-2">
+          <span
+            className="text-2xl font-bold tabular-nums leading-none"
+            style={{ color: q.color }}
+          >
+            {headline != null ? headline.toFixed(1) : '—'}
+          </span>
+          <span className="text-xs text-muted-foreground">ms</span>
+          <span className="text-[11px] text-muted-foreground ml-1">
+            {single ? '最新' : '最优均值'}
+          </span>
+          {q.tier >= 0 && (
+            <span
+              className="px-2 py-0.5 rounded-full text-[11px] font-medium ml-1"
+              style={{ background: `${q.color}1f`, color: q.color }}
+            >
+              {q.label}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-0.5 rounded-lg bg-muted p-0.5">
+          {LATENCY_RANGES.map((r, i) => (
+            <button
+              key={r.short}
+              onClick={() => onRangeIdx(i)}
+              className={cn(
+                'px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors',
+                i === rangeIdx ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {r.short}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="relative h-72 sm:h-80">
         {empty && (
           <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
             {loading ? '加载中…' : `暂无 ${type} 数据`}
@@ -397,7 +479,21 @@ function LatencyBlock({ title, rows, type, loading }: LatencyBlockProps) {
         )}
         {!empty && (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                {visibleSeries.map(s => (
+                  <linearGradient key={s.name} id={`lat-${slug(s.name)}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={s.color} stopOpacity={single ? 0.32 : 0.16} />
+                    <stop offset="100%" stopColor={s.color} stopOpacity={0} />
+                  </linearGradient>
+                ))}
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="hsl(var(--muted-foreground))"
+                strokeOpacity={0.12}
+                vertical={false}
+              />
               <XAxis
                 dataKey="t"
                 type="number"
@@ -414,24 +510,32 @@ function LatencyBlock({ title, rows, type, loading }: LatencyBlockProps) {
                 width={48}
                 domain={['auto', 'auto']}
               />
-              <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                labelFormatter={t => new Date(Number(t)).toLocaleTimeString()}
-                formatter={(v: number) => ms(Number(v))}
-              />
+              <Tooltip content={<LatencyTooltip />} cursor={{ stroke: 'hsl(var(--primary))', strokeOpacity: 0.3, strokeWidth: 1 }} />
+              {avgForRef != null && (
+                <ReferenceLine
+                  y={avgForRef}
+                  stroke={visibleSeries[0].color}
+                  strokeDasharray="4 4"
+                  strokeOpacity={0.5}
+                  label={{ value: `均 ${avgForRef.toFixed(0)}ms`, fontSize: 10, fill: visibleSeries[0].color, position: 'right' }}
+                />
+              )}
               {visibleSeries.map(s => (
-                <Line
+                <Area
                   key={s.name}
                   type="monotone"
                   dataKey={s.name}
                   stroke={s.color}
-                  strokeWidth={1.5}
-                  dot={false}
+                  strokeWidth={single ? 2.2 : 1.6}
+                  fill={single ? `url(#lat-${slug(s.name)})` : 'none'}
+                  fillOpacity={single ? 1 : 0}
                   connectNulls
                   isAnimationActive={false}
+                  activeDot={{ r: 4, fill: s.color, stroke: 'hsl(var(--background))', strokeWidth: 2 }}
+                  dot={false}
                 />
               ))}
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         )}
         {!empty && loading && (
@@ -443,15 +547,18 @@ function LatencyBlock({ title, rows, type, loading }: LatencyBlockProps) {
         <div className="mt-3 border-t pt-3">
           <div className="flex items-center px-2 pb-1 text-[11px] text-muted-foreground">
             <span className="flex-1">来源</span>
-            <span className="w-20 text-right">平均延迟</span>
-            <span className="w-16 text-right">抖动</span>
-            <span className="w-14 text-right">丢包率</span>
+            <span className="hidden sm:block w-16 text-center">趋势</span>
+            <span className="w-16 text-center">质量</span>
+            <span className="w-20 text-right">平均</span>
+            <span className="w-14 text-right">抖动</span>
+            <span className="w-14 text-right">丢包</span>
           </div>
           <div className="space-y-0.5">
             {stats.map(s => (
               <LatencyStatsRow
                 key={s.name}
                 stat={s}
+                spark={data.map(d => (typeof d[s.name] === 'number' ? (d[s.name] as number) : null))}
                 hidden={hidden.has(s.name)}
                 onToggle={() => toggle(s.name)}
               />
@@ -463,45 +570,109 @@ function LatencyBlock({ title, rows, type, loading }: LatencyBlockProps) {
   )
 }
 
+function LatencyTooltip({ active, payload, label }: {
+  active?: boolean
+  payload?: Array<{ name: string; value: number; color: string }>
+  label?: number
+}) {
+  if (!active || !payload?.length) return null
+  const rows = payload.filter(p => p.value != null).sort((a, b) => a.value - b.value)
+  return (
+    <div className="rounded-lg border border-border/60 bg-popover/95 backdrop-blur px-3 py-2 shadow-xl text-xs">
+      <div className="text-[10px] text-muted-foreground mb-1.5 font-mono">
+        {label != null ? new Date(label).toLocaleTimeString() : ''}
+      </div>
+      <div className="space-y-1">
+        {rows.map(p => {
+          const q = latencyQuality(p.value)
+          return (
+            <div key={p.name} className="flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ background: p.color }} />
+              <span className="truncate max-w-[120px]">{p.name}</span>
+              <span className="ml-auto font-mono tabular-nums" style={{ color: q.color }}>
+                {p.value.toFixed(1)}ms
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function MiniSpark({ values, color }: { values: (number | null)[]; color: string }) {
+  const pts = values.filter((v): v is number => v != null)
+  if (pts.length < 2) return <div className="h-4 w-14" />
+  const min = Math.min(...pts)
+  const max = Math.max(...pts)
+  const range = max - min || 1
+  const w = 56
+  const h = 16
+  // 用原始序列(含 null)定位 x,缺失点跳过
+  const n = values.length
+  const coords: string[] = []
+  values.forEach((v, i) => {
+    if (v == null) return
+    const x = (i / (n - 1)) * w
+    const y = h - ((v - min) / range) * (h - 2) - 1
+    coords.push(`${x.toFixed(1)},${y.toFixed(1)}`)
+  })
+  return (
+    <svg width={w} height={h} className="overflow-visible">
+      <polyline points={coords.join(' ')} fill="none" stroke={color} strokeWidth={1.25} strokeLinejoin="round" strokeLinecap="round" opacity={0.85} />
+    </svg>
+  )
+}
+
 function LatencyStatsRow({
   stat,
+  spark,
   hidden,
   onToggle,
 }: {
   stat: LatencyStats
+  spark: (number | null)[]
   hidden: boolean
   onToggle: () => void
 }) {
   const { name, color, avg, jitter, lossRate } = stat
+  const q = latencyQuality(avg)
 
   return (
     <div
       onClick={onToggle}
       className={cn(
-        'flex items-center px-2 py-1 rounded-md text-xs cursor-pointer select-none transition-opacity hover:bg-muted/60',
+        'flex items-center px-2 py-1.5 rounded-md text-xs cursor-pointer select-none transition-opacity hover:bg-muted/60',
         hidden && 'opacity-35',
       )}
     >
       <span className="flex items-center gap-2 flex-1 min-w-0">
-        <span
-          className="inline-block w-4 h-0.5 rounded-full shrink-0"
-          style={{ background: color }}
-        />
+        <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
         <span className="truncate">{name}</span>
       </span>
-      <span className="w-20 text-right tabular-nums font-mono">
+      <span className="hidden sm:flex w-16 justify-center">
+        <MiniSpark values={spark} color={color} />
+      </span>
+      <span className="w-16 text-center">
+        {q.tier >= 0 && (
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium" style={{ background: `${q.color}1f`, color: q.color }}>
+            {q.label}
+          </span>
+        )}
+      </span>
+      <span className="w-20 text-right tabular-nums font-mono" style={{ color: q.tier >= 0 ? q.color : undefined }}>
         {avg != null ? ms(avg) : '—'}
       </span>
-      <span className="w-16 text-right tabular-nums font-mono">
-        {jitter != null ? ms(jitter) : '—'}
+      <span className="w-14 text-right tabular-nums font-mono text-muted-foreground">
+        {jitter != null ? `${jitter.toFixed(0)}ms` : '—'}
       </span>
       <span
         className={cn(
           'w-14 text-right tabular-nums font-mono',
-          lossRate >= 5 && 'text-red-500 font-medium',
+          lossRate >= 5 ? 'text-rose-500 font-medium' : 'text-muted-foreground',
         )}
       >
-        {lossRate.toFixed(1)}%
+        {lossRate.toFixed(0)}%
       </span>
     </div>
   )
@@ -511,7 +682,7 @@ function CostSection({ meta }: { meta: NodeMeta }) {
   const days = remainingDays(meta.expireTime)
   const value = remainingValue(meta)
   const progress = cycleProgress(meta)
-  const unit = meta.priceUnit || '$'
+  const code = normalizeCurrency(meta.priceUnit)
 
   let daysLabel: string
   let daysClass = ''
@@ -540,10 +711,10 @@ function CostSection({ meta }: { meta: NodeMeta }) {
 
   return (
     <Section title="费用">
-      <KV k="月费" v={meta.price > 0 ? `${unit}${meta.price} / ${meta.priceCycle} 天` : null} />
+      <KV k="月费" v={meta.price > 0 ? `${formatMoney(meta.price, code)} / ${meta.priceCycle} 天` : null} />
       <KV k="到期" v={meta.expireTime || null} />
       <KV k="剩余" v={<span className={daysClass}>{daysLabel}</span>} />
-      <KV k="剩余价值" v={meta.price > 0 ? `${unit}${value.toFixed(2)}` : null} />
+      <KV k="剩余价值" v={meta.price > 0 ? formatMoney(value, code) : null} />
 
       {meta.expireTime && days != null && (
         <div className="mt-3 h-1.5 w-full rounded-full bg-muted overflow-hidden">

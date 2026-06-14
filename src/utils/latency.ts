@@ -115,3 +115,22 @@ export function computeLatencyStats(rows: TaskQueryResult[], type: LatencyType):
     return a.lossRate - b.lossRate
   })
 }
+
+export interface LatencyQuality {
+  label: string
+  tier: number // -1 未知, 0 最好 ... 4 最差
+  color: string
+  className: string
+}
+
+/** 按延迟毫秒分级,用于配色与质量标签 */
+export function latencyQuality(ms: number | null | undefined): LatencyQuality {
+  if (ms == null || !Number.isFinite(ms)) {
+    return { label: '无数据', tier: -1, color: '#94a3b8', className: 'text-muted-foreground' }
+  }
+  if (ms <= 50) return { label: '极佳', tier: 0, color: '#10b981', className: 'text-emerald-500' }
+  if (ms <= 100) return { label: '良好', tier: 1, color: '#22c55e', className: 'text-green-500' }
+  if (ms <= 150) return { label: '一般', tier: 2, color: '#f59e0b', className: 'text-amber-500' }
+  if (ms <= 250) return { label: '较差', tier: 3, color: '#f97316', className: 'text-orange-500' }
+  return { label: '很差', tier: 4, color: '#f43f5e', className: 'text-rose-500' }
+}

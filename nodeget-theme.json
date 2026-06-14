@@ -1,18 +1,18 @@
 {
-  "name": "NodeGet Basic Theme",
-  "short": "NodeGetBasic",
-  "description": "NodeGet Basic Theme - a boilerplate for custom themes",
-  "author": "NodeSeekDev",
-  "repository": "https://github.com/NodeSeekDev/NodeGet-StatusShow",
-  "dist_page": "https://nodeget.pages.dev",
+  "name": "laozig 探针",
+  "short": "laozig",
+  "description": "laozig 二开 NodeGet 探针主题:页内实时切换 8 套预设主题 / 17 强调色 / 玻璃·经典·极简卡片 / 明暗·跟随系统;实时汇率多币种费用统计、脉冲世界地图、自定义右键菜单、延迟质量分级图表、动态粒子背景。",
+  "author": "laozig",
+  "repository": "",
+  "dist_page": "",
   "user_preferences_form": {
-    "version": "0.0.1",
+    "version": "0.0.2",
     "items": [
       {
         "key": "site_name",
         "name": "站点标题",
         "type": "string",
-        "default": "NodeGet Status",
+        "default": "laozig 探针",
         "help": "输入站点标题"
       },
       {
@@ -26,11 +26,80 @@
         "key": "footer",
         "name": "页脚文本",
         "type": "string",
-        "default": "Powered by NodeGet",
+        "default": "Powered by NodeGet · Crafted by laozig",
         "help": "输入页脚文本"
+      },
+      {
+        "key": "section_display",
+        "name": "显示设置",
+        "type": "title"
+      },
+      {
+        "key": "show_dashboard",
+        "name": "显示仪表盘",
+        "type": "switch",
+        "default": true,
+        "help": "是否在顶部显示节点统计概览"
+      },
+      {
+        "key": "show_price",
+        "name": "显示价格",
+        "type": "switch",
+        "default": true,
+        "help": "是否在节点卡片上显示价格信息（按节点各自配置的币种显示）"
+      },
+      {
+        "key": "show_expire",
+        "name": "显示到期时间",
+        "type": "switch",
+        "default": true,
+        "help": "是否在节点卡片上显示到期倒计时"
+      },
+      {
+        "key": "section_theme",
+        "name": "主题风格",
+        "type": "title"
+      },
+      {
+        "key": "theme_preset",
+        "name": "预设主题",
+        "type": "select",
+        "options": "nebula,cyberpunk,aurora,sakura,terminal,mono,midnight,sunset",
+        "default": "nebula",
+        "help": "整体气质预设：nebula=星云, cyberpunk=赛博朋克, aurora=极光, sakura=樱花, terminal=终端, mono=石墨, midnight=午夜, sunset=日落（访客可在页内主题面板中切换）"
+      },
+      {
+        "key": "accent_color",
+        "name": "主题色",
+        "type": "select",
+        "options": "cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,red,orange,amber,lime,green,emerald,teal,slate",
+        "default": "cyan",
+        "help": "选择主题强调色（共 17 种，访客也可在页内主题面板中自行切换）"
+      },
+      {
+        "key": "card_style",
+        "name": "卡片风格",
+        "type": "select",
+        "options": "glass,classic,minimal",
+        "default": "glass",
+        "help": "glass=玻璃拟态, classic=经典, minimal=极简（访客可在页内主题面板中切换）"
+      },
+      {
+        "key": "show_particles",
+        "name": "粒子背景",
+        "type": "switch",
+        "default": true,
+        "help": "是否启用背景粒子动画（颜色跟随主题色）"
+      },
+      {
+        "key": "announcement",
+        "name": "公告栏",
+        "type": "string",
+        "default": "",
+        "help": "顶部公告文本，留空则不显示"
       }
     ]
   },
   "version": "will be auto filled using version in package.json",
-  "license": ""
+  "license": "AGPL-3.0"
 }
