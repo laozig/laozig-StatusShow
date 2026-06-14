@@ -154,53 +154,85 @@ SITE_2=name="master-2",backend_url="wss://m2.example.com",token="xyz789"
 
 ## 🖼️ 展示预览
 
-:::: tabs
-::: tab-item 星云
+<details open>
+<summary>星云</summary>
+
 ![星云主题预览](https://cdn.nodeimage.com/i/Xs93uPQKGTJoIAkCY3V0YyVIEie294wt.png)
-:::
 
-::: tab-item 简洁现代
+</details>
+
+<details>
+<summary>简洁现代</summary>
+
 ![简洁现代主题预览](https://cdn.nodeimage.com/i/zH2G0EG8YRYrwOJubTwly4IGUkZoGJVU.png)
-:::
 
-::: tab-item 科技
+</details>
+
+<details>
+<summary>科技</summary>
+
 ![科技主题预览](https://cdn.nodeimage.com/i/8L6vPDDbnvnhlWCRs52YuPNrPsribO1u.png)
-:::
 
-::: tab-item 未来
+</details>
+
+<details>
+<summary>未来</summary>
+
 ![未来主题预览](https://cdn.nodeimage.com/i/8lfadjVashGP0bZqLZNlCGX21UaboOju.png)
-:::
 
-::: tab-item 像素
+</details>
+
+<details>
+<summary>像素</summary>
+
 ![像素主题预览](https://cdn.nodeimage.com/i/E41aQGpg56oRPpVJsRqVe6Qvpthe2Xyy.png)
-:::
 
-::: tab-item 写实
+</details>
+
+<details>
+<summary>写实</summary>
+
 ![写实主题预览](https://cdn.nodeimage.com/i/6WaUjo5xo7BFvQXjPcccGlRMjMXMxcb4.png)
-:::
 
-::: tab-item 古朴
+</details>
+
+<details>
+<summary>古朴</summary>
+
 ![古朴主题预览](https://cdn.nodeimage.com/i/XwgDMM7iuQkQ9IdefhL3pTJe19uMoCoY.png)
-:::
 
-::: tab-item 中世纪
+</details>
+
+<details>
+<summary>中世纪</summary>
+
 ![中世纪主题预览](https://cdn.nodeimage.com/i/lpipBDT6xIP8Jjac6iWuoCh3eX93IgSF.png)
-:::
 
-::: tab-item 战损
+</details>
+
+<details>
+<summary>战损</summary>
+
 ![战损主题预览](https://cdn.nodeimage.com/i/brL4lJ2cY4FqmoohXMzt4xlKeNIPgOFr.png)
-:::
 
-::: tab-item 世界地图
+</details>
+
+<details>
+<summary>世界地图</summary>
+
 ![脉冲世界地图预览](https://cdn.nodeimage.com/i/QPlK8dAlaqBAAmy02cQIQyzcf56TYXZ4.png)
-:::
 
-::: tab-item TCP Ping
+</details>
+
+<details>
+<summary>TCP Ping</summary>
+
 ![TCP Ping 图表预览](https://cdn.nodeimage.com/i/6CvQrjBsERWc2fneSUkHrmZHVnLoajGC.png)
-:::
-::::
+
+</details>
 
 ---
+
 ## 📄 协议与致谢
 
 - 本项目基于 [NodeGet-StatusShow](https://github.com/NodeSeekDev/NodeGet-StatusShow) 二次开发，遵循 **AGPL-3.0** 协议。
