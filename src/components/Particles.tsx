@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useAppearance, resolveMode } from '../hooks/useAppearance'
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 
 interface Particle {
   x: number
@@ -24,9 +25,10 @@ export function Particles({ enabled }: { enabled: boolean }) {
   const animRef = useRef<number>(0)
   const particlesRef = useRef<Particle[]>([])
   const { accent, mode, preset } = useAppearance()
+  const reduced = usePrefersReducedMotion()
 
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled || reduced) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -35,7 +37,8 @@ export function Particles({ enabled }: { enabled: boolean }) {
     const base = accentHue()
 
     const initParticles = (w: number, h: number) => {
-      const count = Math.floor((w * h) / 18000)
+      // 上限封顶:大屏(4K)按面积会产出上千粒子,连线是 O(n²),必须设上限
+      const count = Math.min(Math.floor((w * h) / 18000), 140)
       const particles: Particle[] = []
       for (let i = 0; i < count; i++) {
         particles.push({
@@ -83,16 +86,19 @@ export function Particles({ enabled }: { enabled: boolean }) {
 
       // Draw connections
       const maxDist = 120
+      const maxDistSq = maxDist * maxDist
       for (let i = 0; i < particles.length; i++) {
+        const pi = particles[i]
         for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x
-          const dy = particles[i].y - particles[j].y
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist < maxDist) {
-            const alpha = (1 - dist / maxDist) * (isDark ? 0.08 : 0.06)
+          const pj = particles[j]
+          const dx = pi.x - pj.x
+          const dy = pi.y - pj.y
+          const distSq = dx * dx + dy * dy
+          if (distSq < maxDistSq) {
+            const alpha = (1 - Math.sqrt(distSq) / maxDist) * (isDark ? 0.08 : 0.06)
             ctx.beginPath()
-            ctx.moveTo(particles[i].x, particles[i].y)
-            ctx.lineTo(particles[j].x, particles[j].y)
+            ctx.moveTo(pi.x, pi.y)
+            ctx.lineTo(pj.x, pj.y)
             ctx.strokeStyle = `hsla(${base}, 80%, ${isDark ? '60%' : '40%'}, ${alpha})`
             ctx.lineWidth = 0.5
             ctx.stroke()
@@ -109,8 +115,8 @@ export function Particles({ enabled }: { enabled: boolean }) {
       cancelAnimationFrame(animRef.current)
       window.removeEventListener('resize', resize)
     }
-  }, [enabled, accent, mode, preset])
+  }, [enabled, accent, mode, preset, reduced])
 
-  if (!enabled) return null
+  if (!enabled || reduced) return null
   return <canvas ref={canvasRef} className="particles-canvas" />
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Particles } from './Particles'
 import { useAppearance, resolveMode } from '../hooks/useAppearance'
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 
 interface Props {
   showParticles?: boolean
@@ -35,6 +36,7 @@ const THEME_ALPHA: Record<string, number> = {
 export function Background({ showParticles = true }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { mode, preset } = useAppearance()
+  const reduced = usePrefersReducedMotion()
 
   // Aurora / animated gradient mesh background
   useEffect(() => {
@@ -86,7 +88,8 @@ export function Background({ showParticles = true }: Props) {
         ctx.fillRect(0, 0, canvas.width, canvas.height)
       }
 
-      animId = requestAnimationFrame(draw)
+      // 减弱动态时只画一帧静态光晕,不持续重绘
+      if (!reduced) animId = requestAnimationFrame(draw)
     }
 
     draw()
@@ -95,7 +98,7 @@ export function Background({ showParticles = true }: Props) {
       cancelAnimationFrame(animId)
       window.removeEventListener('resize', resize)
     }
-  }, [mode, preset])
+  }, [mode, preset, reduced])
 
   return (
     <>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BackendPool } from '../api/pool'
+import { BackendPool, type PoolEntry } from '../api/pool'
 import { dynamicSummaryMulti, kvGetMulti, listAgentUuids, staticDataMulti } from '../api/methods'
 import { isOnline } from '../utils/status'
 import type { DynamicSummary, HistorySample, Node, NodeMeta, SiteConfig } from '../types'
@@ -130,9 +130,45 @@ export function useNodes(config: SiteConfig | null) {
     setPool(pool)
     const sourceUuids = new Map<string, string[]>()
 
+    const loadMetaStatic = async (entry: PoolEntry, uuids: string[]) => {
+      if (!uuids.length) return
+      const kvItems = uuids.flatMap(u => META_KEYS.map(k => ({ namespace: u, key: k })))
+      const [meta, stat] = await Promise.allSettled([
+        kvGetMulti(entry.client, kvItems),
+        staticDataMulti(entry.client, uuids, STATIC_FIELDS),
+      ])
+
+      setAgents(prev => {
+        const next = new Map(prev)
+
+        if (meta.status === 'fulfilled' && meta.value) {
+          const grouped = new Map<string, Record<string, unknown>>()
+          for (const row of meta.value) {
+            if (!row || row.value == null) continue
+            let bucket = grouped.get(row.namespace)
+            if (!bucket) grouped.set(row.namespace, (bucket = {}))
+            bucket[row.key] = row.value
+          }
+          for (const uuid of uuids) {
+            const cur = next.get(uuid) ?? blankAgent(uuid, entry.name)
+            next.set(uuid, { ...cur, meta: parseMeta(grouped.get(uuid) ?? {}) })
+          }
+        }
+
+        if (stat.status === 'fulfilled' && stat.value) {
+          for (const row of stat.value) {
+            if (!row.uuid) continue
+            const cur = next.get(row.uuid) ?? blankAgent(row.uuid, entry.name)
+            next.set(row.uuid, { ...cur, static: row })
+          }
+        }
+        return next
+      })
+    }
+
     const bootstrap = async () => {
       const agentsRes = await pool.fanout(listAgentUuids)
-      setErrors(prev => [...prev, ...agentsRes.errors])
+      setErrors(agentsRes.errors)
 
       const seed = new Map<string, Agent>()
       for (const { source, rows } of agentsRes.ok) {
@@ -142,45 +178,7 @@ export function useNodes(config: SiteConfig | null) {
       }
       setAgents(seed)
 
-      await Promise.all(
-        pool.entries.map(async entry => {
-          const uuids = sourceUuids.get(entry.name) || []
-          if (!uuids.length) return
-
-          const kvItems = uuids.flatMap(u => META_KEYS.map(k => ({ namespace: u, key: k })))
-          const [meta, stat] = await Promise.allSettled([
-            kvGetMulti(entry.client, kvItems),
-            staticDataMulti(entry.client, uuids, STATIC_FIELDS),
-          ])
-
-          setAgents(prev => {
-            const next = new Map(prev)
-
-            if (meta.status === 'fulfilled' && meta.value) {
-              const grouped = new Map<string, Record<string, unknown>>()
-              for (const row of meta.value) {
-                if (!row || row.value == null) continue
-                let bucket = grouped.get(row.namespace)
-                if (!bucket) grouped.set(row.namespace, (bucket = {}))
-                bucket[row.key] = row.value
-              }
-              for (const uuid of uuids) {
-                const cur = next.get(uuid) ?? blankAgent(uuid, entry.name)
-                next.set(uuid, { ...cur, meta: parseMeta(grouped.get(uuid) ?? {}) })
-              }
-            }
-
-            if (stat.status === 'fulfilled' && stat.value) {
-              for (const row of stat.value) {
-                if (!row.uuid) continue
-                const cur = next.get(row.uuid) ?? blankAgent(row.uuid, entry.name)
-                next.set(row.uuid, { ...cur, static: row })
-              }
-            }
-            return next
-          })
-        }),
-      )
+      await Promise.all(pool.entries.map(e => loadMetaStatic(e, sourceUuids.get(e.name) || [])))
 
       await tickDynamic()
       setLoading(false)
@@ -188,16 +186,44 @@ export function useNodes(config: SiteConfig | null) {
 
     const tickDynamic = async () => {
       const updates: DynamicSummary[] = []
+      const okSources = new Set<string>()
       await Promise.allSettled(
         pool.entries.map(async entry => {
-          const uuids = sourceUuids.get(entry.name) || []
+          let uuids = sourceUuids.get(entry.name) || []
+          // 启动时没连上的后端:重试拉取节点列表,成功则补种 meta/static
+          if (!uuids.length) {
+            try {
+              const fresh = await listAgentUuids(entry.client)
+              if (fresh.length) {
+                sourceUuids.set(entry.name, fresh)
+                uuids = fresh
+                setAgents(prev => {
+                  const next = new Map(prev)
+                  for (const u of fresh) if (!next.has(u)) next.set(u, blankAgent(u, entry.name))
+                  return next
+                })
+                await loadMetaStatic(entry, fresh)
+              }
+            } catch {}
+          }
           if (!uuids.length) return
           try {
             const rows = await dynamicSummaryMulti(entry.client, uuids, DYNAMIC_FIELDS)
             for (const row of rows || []) updates.push(row)
+            okSources.add(entry.name)
           } catch {}
         }),
       )
+
+      // 后端恢复后清掉它启动时残留的错误条
+      if (okSources.size) {
+        setErrors(prev =>
+          prev.some(e => okSources.has(e.source))
+            ? prev.filter(e => !okSources.has(e.source))
+            : prev,
+        )
+      }
+
       if (!updates.length) return
 
       setLive(prev => {
@@ -222,17 +248,32 @@ export function useNodes(config: SiteConfig | null) {
       setLoading(false)
     })
 
+    // 后台标签页暂停轮询,省带宽与后端压力;切回前台立即刷新一次再恢复
+    let dynTimer: ReturnType<typeof setInterval> | null = null
+    let clockTimer: ReturnType<typeof setInterval> | null = null
+    const startTimers = () => {
+      if (dynTimer == null) dynTimer = setInterval(tickDynamic, DYN_INTERVAL_MS)
+      if (clockTimer == null) clockTimer = setInterval(() => setTick(t => t + 1), 5000)
+    }
+    const stopTimers = () => {
+      if (dynTimer != null) { clearInterval(dynTimer); dynTimer = null }
+      if (clockTimer != null) { clearInterval(clockTimer); clockTimer = null }
+    }
+
     const onVisible = () => {
-      if (document.visibilityState === 'visible') tickDynamic()
+      if (document.visibilityState === 'visible') {
+        tickDynamic()
+        startTimers()
+      } else {
+        stopTimers()
+      }
     }
     document.addEventListener('visibilitychange', onVisible)
 
-    const dynTimer = setInterval(tickDynamic, DYN_INTERVAL_MS)
-    const clockTimer = setInterval(() => setTick(t => t + 1), 5000)
+    if (document.visibilityState === 'visible') startTimers()
 
     return () => {
-      clearInterval(dynTimer)
-      clearInterval(clockTimer)
+      stopTimers()
       document.removeEventListener('visibilitychange', onVisible)
       setPool(null)
       pool.close()

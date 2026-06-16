@@ -27,7 +27,7 @@ export class RpcClient {
   private name: string
   private ws: WebSocket | null = null
   private pending = new Map<string, Pending>()
-  private outbox: string[] = []
+  private outbox: { id: string; payload: string }[] = []
   private closed = false
   opened: Promise<void>
 
@@ -72,7 +72,12 @@ export class RpcClient {
       clearTimeout(timer)
       log(this.name, `open in ${(performance.now() - t0).toFixed(0)}ms (flush ${this.outbox.length})`)
       ok()
-      for (const m of this.outbox) ws.send(m)
+      // 首次连接曾失败会让 opened 永久 reject,这里用已兑现的 Promise 覆盖,确保重连后 call 可用
+      this.opened = Promise.resolve()
+      // 重连后只重发仍在等待的请求,已超时/已结算的丢弃
+      for (const m of this.outbox) {
+        if (this.pending.has(m.id)) ws.send(m.payload)
+      }
       this.outbox = []
     }
 
@@ -130,6 +135,7 @@ export class RpcClient {
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id)
+        this.outbox = this.outbox.filter(m => m.id !== id)
         warn(this.name, `× ${method} timeout ${timeout}ms`)
         reject(new Error(`${method} 超时`))
       }, timeout)
@@ -140,7 +146,7 @@ export class RpcClient {
         reject,
         timer,
       })
-      if (queued) this.outbox.push(payload)
+      if (queued) this.outbox.push({ id, payload })
       else this.ws!.send(payload)
     })
   }

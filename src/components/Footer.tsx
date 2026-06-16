@@ -1,24 +1,12 @@
-import { useEffect, useState } from 'react'
 import { parseGitRepo } from "../utils/git"
 import { ExternalLink, HardDriveDownload, FolderSync } from 'lucide-react'
+import { useLatestVersion } from '../hooks/useLatestVersion'
 
 export function Footer({ text, repo, dist_page }: { text?: string, repo?: string, dist_page?: string }) {
-  const [latest, setLatest] = useState<string | null>(null)
+  const { latest, outdated } = useLatestVersion(repo, dist_page)
 
   const git = repo ? parseGitRepo(repo) : null
-  const PKG_URL = git
-    ? `https://raw.githubusercontent.com/${git.user}/${git.repo}/main/package.json`
-    : null
 
-  useEffect(() => {
-    if (!PKG_URL) return
-    fetch(PKG_URL)
-      .then(r => (r.ok ? r.json() : null))
-      .then(j => j?.version && setLatest(String(j.version)))
-      .catch(() => { })
-  }, [PKG_URL])
-
-  const outdated = latest != null && latest !== __APP_VERSION__
   const laststDist = dist_page
     ? `${dist_page}/NodeGet-StatusShow.zip?version=v${latest}`
     : repo

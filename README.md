@@ -132,6 +132,41 @@ git push
 
 ---
 
+## 🔄 发版与更新提示（给主题作者）
+
+主题内置版本检测：访客页面会和你部署的最新版比对，有新版时**右下角弹出提示卡片**，点「一键更新」即可跳到 NodeGet 主控重新拉取你的新版（访客也可「忽略此版本」，同版本不再打扰）。
+
+**版本怎么定义：** 唯一来源是 `package.json` 的 `version`。构建时自动：
+
+- 注入前端作为「当前版本」（`__APP_VERSION__`）；
+- 写进 `dist/nodeget-theme.json` 的 `version`（由 `postbuild` 完成，**无需手动改**）。
+
+**发新版三步：**
+
+1. 抬一下版本号（语义化 `主.次.修`）：
+
+   ```bash
+   npm version patch   # 1.4.3 → 1.4.4；新增功能用 minor，破坏性改动用 major
+   ```
+
+   或直接手改 `package.json` 里的 `version`。
+
+2. 推送：
+
+   ```bash
+   git push
+   ```
+
+3. Cloudflare Pages 自动重新构建。访客页面下次打开就会比对到新版，右下角弹「发现新版本」。
+
+**检测原理（不需要 GitHub Release）：**
+
+- 访客站**优先拉你的 `dist_page`** 上的 `nodeget-theme.json` 取最新版本号，失败再回退 GitHub `main` 分支的 `package.json`。
+- 跨域读取依赖 [public/_headers](public/_headers) 给 `nodeget-theme.json` 放行 CORS —— 首次启用后**必须重新部署一次** CF Pages 才生效；在那之前走 GitHub 回退（国内可能拉不到）。
+- **版本号不变就不会提示**，所以每次发版务必 bump `version`。
+
+---
+
 ## 环境变量（旧版兼容）
 
 除了 `NODEGET_CONFIG`，仍兼容旧版的分散环境变量：

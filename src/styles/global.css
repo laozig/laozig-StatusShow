@@ -1188,3 +1188,15 @@ kbd {
 .scrollbar-gutter {
   scrollbar-gutter: stable;
 }
+
+/* 系统「减弱动态效果」:停掉入场/跑马灯/脉冲等 CSS 动画与过渡 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

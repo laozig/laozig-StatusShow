@@ -26,6 +26,7 @@ import { ThemePanel } from './components/ThemePanel'
 import { ContextMenu } from './components/ContextMenu'
 import { SideRail } from './components/SideRail'
 import { ScrollTop } from './components/ScrollTop'
+import { UpdateNotice } from './components/UpdateNotice'
 import { useAppearance, setAppearanceDefaults, cycleMode } from './hooks/useAppearance'
 import { usePins, togglePin } from './hooks/usePins'
 
@@ -431,6 +432,7 @@ function AppInner() {
       />
 
       <ScrollTop />
+      <UpdateNotice repo={config.repository} distPage={config.dist_page} />
     </div>
   )
 }

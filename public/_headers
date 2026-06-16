@@ -1,0 +1,8 @@
+# CF Pages 路由响应头:允许任意来源跨域读取版本与主题产物
+# 这样别人部署的站点才能跨域拉本站的 nodeget-theme.json 做新版本检测
+/nodeget-theme.json
+  Access-Control-Allow-Origin: *
+/config.json
+  Access-Control-Allow-Origin: *
+/NodeGet-StatusShow.zip
+  Access-Control-Allow-Origin: *
