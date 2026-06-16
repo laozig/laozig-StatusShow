@@ -73,7 +73,7 @@ const LS = {
   preset: 'nodeget.preset',
 }
 
-const BAKED: Appearance = { mode: 'dark', accent: 'cyan', card: 'glass', preset: 'nebula' }
+const BAKED: Appearance = { mode: 'dark', accent: 'violet', card: 'glass', preset: 'future' }
 
 let configDefaults: Partial<Appearance> = {}
 let overrides: Partial<Appearance> = readOverrides()

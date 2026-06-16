@@ -24,7 +24,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Orbitron:wght@500;700&family=Share+Tech+Mono&family=Special+Elite&family=VT323&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cinzel+Decorative:wght@700;900&family=Liu+Jian+Mao+Cao&family=Long+Cang&family=Ma+Shan+Zheng&family=MedievalSharp&family=Orbitron:wght@500;700&family=Pirata+One&family=Press+Start+2P&family=Share+Tech+Mono&family=Special+Elite&family=VT323&family=ZCOOL+XiaoWei&display=swap"
       rel="stylesheet"
     />
     <title>laozig</title>
@@ -37,10 +37,10 @@
           var dark = mode === 'dark' ||
             (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
           root.classList.add(dark ? 'dark' : 'light')
-          var accent = localStorage.getItem('nodeget.accent')
-          if (accent) root.setAttribute('data-accent', accent)
-          var preset = localStorage.getItem('nodeget.preset')
-          if (preset && preset !== 'nebula') root.setAttribute('data-theme', preset)
+          var accent = localStorage.getItem('nodeget.accent') || 'violet'
+          root.setAttribute('data-accent', accent)
+          var preset = localStorage.getItem('nodeget.preset') || 'future'
+          if (preset !== 'nebula') root.setAttribute('data-theme', preset)
         } catch (_) {
           document.documentElement.classList.add('dark')
         }

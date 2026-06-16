@@ -60,11 +60,17 @@ export function NodeCard({ node, cardStyle = 'glass', showPrice = true, showExpi
       <Card
         className={cn(
           cardClass,
-          'p-4 flex flex-col gap-3 h-full',
+          'card-hud relative p-4 flex flex-col gap-3.5 h-full',
           pinned && 'ring-1 ring-primary/40',
           !node.online && 'opacity-50 grayscale-[0.3]',
         )}
       >
+        {/* HUD 装饰:四角 corner brackets(顶部能量线由 .card-hud::before 提供) */}
+        <span className="hud-corner hud-tl" aria-hidden />
+        <span className="hud-corner hud-tr" aria-hidden />
+        <span className="hud-corner hud-bl" aria-hidden />
+        <span className="hud-corner hud-br" aria-hidden />
+
         {/* Header */}
         <div className="flex items-center gap-2">
           <StatusDot online={node.online} />
@@ -86,7 +92,7 @@ export function NodeCard({ node, cardStyle = 'glass', showPrice = true, showExpi
         )}
 
         {/* Metrics */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           <Metric label="CPU" value={u.cpu} sub={cpu || null} subTitle={cpu || undefined} />
           <Metric
             label="内存"
@@ -98,19 +104,21 @@ export function NodeCard({ node, cardStyle = 'glass', showPrice = true, showExpi
             value={u.disk}
             sub={u.diskTotal ? `${bytes(u.diskUsed)} / ${bytes(u.diskTotal)}` : null}
           />
-          <Metric
-            label="Swap"
-            value={
-              node.dynamic?.total_swap && node.dynamic.total_swap > 0 && node.dynamic.used_swap != null
-                ? (node.dynamic.used_swap / node.dynamic.total_swap) * 100
-                : 0
-            }
-            sub={
-              node.dynamic?.total_swap && node.dynamic.total_swap > 0 && node.dynamic.used_swap != null
-                ? `${bytes(node.dynamic.used_swap)} / ${bytes(node.dynamic.total_swap)}`
-                : '未开启'
-            }
-          />
+          {node.dynamic?.total_swap != null && node.dynamic.total_swap > 0 && (
+            <Metric
+              label="Swap"
+              value={
+                node.dynamic.used_swap != null
+                  ? (node.dynamic.used_swap / node.dynamic.total_swap) * 100
+                  : 0
+              }
+              sub={
+                node.dynamic.used_swap != null
+                  ? `${bytes(node.dynamic.used_swap)} / ${bytes(node.dynamic.total_swap)}`
+                  : undefined
+              }
+            />
+          )}
         </div>
 
         {/* CPU 趋势火花线 */}
@@ -119,8 +127,8 @@ export function NodeCard({ node, cardStyle = 'glass', showPrice = true, showExpi
         )}
 
         {/* Network + 总流量 + Uptime */}
-        <div className="mt-auto pt-2 border-t border-dashed border-border/50 font-mono text-xs text-muted-foreground space-y-1.5">
-          <div className="flex items-center gap-3">
+        <div className="mt-auto pt-3 border-t border-dashed border-border/50 font-mono text-xs text-muted-foreground space-y-1.5">
+          <div className="flex items-center gap-3 text-[13px] text-foreground/85 font-medium">
             <Stat icon={ArrowDown}>{bytes(u.netIn || 0)}/s</Stat>
             <Stat icon={ArrowUp}>{bytes(u.netOut || 0)}/s</Stat>
           </div>

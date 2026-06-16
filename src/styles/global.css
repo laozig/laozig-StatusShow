@@ -293,10 +293,10 @@
   --radius: 0.125rem;
   --font-sans: 'Special Elite', 'Courier New', 'Microsoft YaHei', monospace;
   --font-mono: 'Special Elite', 'Courier New', monospace;
-  --bg-blob-1: rgba(120, 90, 50, 0.12);
-  --bg-blob-2: rgba(90, 70, 40, 0.10);
-  --bg-blob-3: rgba(140, 80, 30, 0.07);
-  --bg-blob-4: rgba(60, 55, 45, 0.06);
+  --bg-blob-1: rgba(170, 80, 40, 0.12);
+  --bg-blob-2: rgba(115, 105, 58, 0.11);
+  --bg-blob-3: rgba(180, 140, 80, 0.07);
+  --bg-blob-4: rgba(70, 65, 58, 0.07);
 }
 [data-theme="wartorn"] {
   --background: 38 14% 86%;
@@ -306,11 +306,11 @@
   --border: 36 18% 60%;
 }
 .dark[data-theme="wartorn"] {
-  --background: 35 13% 7%;
-  --card: 35 11% 10%;
-  --secondary: 35 9% 15%;
-  --muted: 35 8% 15%;
-  --border: 35 14% 22%;
+  --background: 38 10% 7%;
+  --card: 40 7% 12%;
+  --secondary: 40 7% 16%;
+  --muted: 40 6% 16%;
+  --border: 26 32% 28%;
 }
 /* 裂痕粗边 + 颗粒噪点 */
 [data-theme="wartorn"] .card-glass,
@@ -381,25 +381,30 @@
   box-shadow: 0 0 0 1px hsl(var(--primary) / 0.35), 0 0 64px -12px hsl(var(--primary) / 0.6);
 }
 
-/* 像素风:VT323 点阵字、0 圆角、硬像素投影、扫描线 */
+/* 像素风:Press Start 2P 8-bit 字 · 马里奥天蓝 · 黑描边 · 硬投影 */
 [data-theme="pixel"] {
   --radius: 0px;
-  --font-sans: 'VT323', 'Courier New', 'Microsoft YaHei', monospace;
-  --font-mono: 'VT323', 'Courier New', monospace;
-  --bg-blob-1: rgba(132, 204, 22, 0.10);
-  --bg-blob-2: rgba(34, 197, 94, 0.08);
-  --bg-blob-3: rgba(6, 182, 212, 0.06);
-  --bg-blob-4: rgba(34, 197, 94, 0.04);
+  --font-sans: 'Press Start 2P', 'VT323', 'Microsoft YaHei', monospace;
+  --font-mono: 'Press Start 2P', 'VT323', monospace;
+  --bg-blob-1: rgba(252, 208, 0, 0.12);
+  --bg-blob-2: rgba(0, 168, 0, 0.10);
+  --bg-blob-3: rgba(228, 0, 88, 0.08);
+  --bg-blob-4: rgba(92, 148, 252, 0.12);
 }
 .dark[data-theme="pixel"] {
-  --background: 150 30% 5%;
-  --card: 150 22% 7%;
-  --secondary: 150 16% 12%;
-  --muted: 150 14% 12%;
-  --border: 150 24% 16%;
+  --background: 213 90% 66%;
+  --card: 40 74% 93%;
+  --secondary: 210 46% 84%;
+  --muted: 210 38% 86%;
+  --border: 0 0% 10%;
+  --foreground: 0 0% 12%;
+  --card-foreground: 0 0% 12%;
+  --popover-foreground: 0 0% 12%;
+  --secondary-foreground: 0 0% 12%;
+  --muted-foreground: 0 0% 34%;
 }
-/* VT323 偏小,整体放大 + 硬投影 + 无模糊 */
-[data-theme="pixel"] { font-size: 1.08em; }
+/* Press Start 2P 偏大,整体缩小补偿 */
+[data-theme="pixel"] { font-size: 0.7em; letter-spacing: 0.01em; }
 [data-theme="pixel"] .card-glass,
 [data-theme="pixel"] .card-classic,
 [data-theme="pixel"] .card-minimal {
@@ -441,57 +446,60 @@
   box-shadow: 0 1px 2px rgba(0,0,0,0.1), 0 6px 16px -8px rgba(0,0,0,0.25), 0 16px 40px -20px rgba(0,0,0,0.2);
 }
 
-/* 古朴风:中文衬线、羊皮纸暖褐、复古 */
+/* 古朴风:青绿山水 · 文人书卷 —— 月白/青墨、竹青、半透明、朱砂印 */
 [data-theme="antique"] {
   --radius: 0.375rem;
-  --font-sans: 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', Georgia, serif;
+  --font-sans: 'ZCOOL XiaoWei', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', Georgia, serif;
   --font-mono: 'Noto Serif SC', 'Songti SC', Georgia, serif;
-  --primary: 28 60% 42%;
-  --ring: 28 60% 42%;
-  --accent: 28 60% 42%;
-  --background: 38 34% 82%;
-  --card: 44 50% 95%;
-  --secondary: 38 28% 77%;
-  --muted: 38 24% 78%;
-  --border: 34 34% 60%;
-  --bg-blob-1: rgba(180, 120, 60, 0.12);
-  --bg-blob-2: rgba(160, 110, 50, 0.09);
-  --bg-blob-3: rgba(200, 150, 80, 0.07);
-  --bg-blob-4: rgba(120, 90, 50, 0.05);
+  --primary: 170 32% 40%;
+  --ring: 170 32% 40%;
+  --accent: 170 32% 40%;
+  --background: 165 16% 88%;
+  --card: 160 30% 97%;
+  --secondary: 165 14% 82%;
+  --muted: 165 12% 83%;
+  --border: 168 18% 60%;
+  --foreground: 195 22% 22%;
+  --bg-blob-1: rgba(90, 150, 130, 0.10);
+  --bg-blob-2: rgba(70, 120, 120, 0.08);
+  --bg-blob-3: rgba(120, 160, 140, 0.06);
+  --bg-blob-4: rgba(60, 100, 90, 0.05);
 }
 .dark[data-theme="antique"] {
-  --primary: 32 70% 52%;
-  --ring: 32 70% 52%;
-  --accent: 32 70% 52%;
-  --background: 30 22% 8%;
-  --card: 30 20% 11%;
-  --secondary: 30 16% 16%;
-  --muted: 30 14% 16%;
-  --border: 32 22% 22%;
+  --primary: 165 44% 54%;
+  --ring: 165 44% 54%;
+  --accent: 165 44% 54%;
+  --background: 190 26% 7%;
+  --card: 190 20% 11%;
+  --secondary: 190 14% 16%;
+  --muted: 190 13% 16%;
+  --border: 180 22% 26%;
+  --foreground: 170 18% 86%;
+  --card-foreground: 170 18% 86%;
 }
 
-/* 中世纪风:Cinzel 罗马刻铭体、暗石底、烫金 */
+/* 中世纪风:冷峻城堡石厅 —— Cinzel 刻铭 + 哥特黑体、蓝灰石底、银白冷金 */
 [data-theme="medieval"] {
   --radius: 0.25rem;
-  --font-sans: 'Cinzel', 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  --font-sans: 'Cinzel', 'MedievalSharp', 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
   --font-mono: 'Cinzel', 'Noto Serif SC', serif;
-  --primary: 40 70% 48%;
-  --ring: 40 70% 48%;
-  --accent: 40 70% 48%;
-  --bg-blob-1: rgba(180, 140, 60, 0.12);
-  --bg-blob-2: rgba(120, 40, 40, 0.09);
-  --bg-blob-3: rgba(150, 120, 50, 0.07);
-  --bg-blob-4: rgba(80, 60, 40, 0.05);
+  --primary: 41 44% 58%;
+  --ring: 41 44% 58%;
+  --accent: 41 44% 58%;
+  --bg-blob-1: rgba(201, 176, 121, 0.12);
+  --bg-blob-2: rgba(90, 122, 144, 0.12);
+  --bg-blob-3: rgba(150, 165, 180, 0.06);
+  --bg-blob-4: rgba(40, 55, 70, 0.06);
 }
 .dark[data-theme="medieval"] {
-  --primary: 42 78% 55%;
-  --ring: 42 78% 55%;
-  --accent: 42 78% 55%;
-  --background: 30 18% 6%;
-  --card: 28 16% 9%;
-  --secondary: 28 12% 14%;
-  --muted: 28 11% 14%;
-  --border: 36 24% 20%;
+  --primary: 41 46% 60%;
+  --ring: 41 46% 60%;
+  --accent: 41 46% 60%;
+  --background: 216 22% 8%;
+  --card: 213 19% 12%;
+  --secondary: 213 14% 17%;
+  --muted: 213 13% 17%;
+  --border: 41 30% 36%;
 }
 [data-theme="medieval"] .card-glass,
 [data-theme="medieval"] .card-classic,
@@ -553,14 +561,19 @@
   50% { background-position: 35% 25%, 65% 12%, 40% 75%; }
 }
 
-/* —— 像素:暗绿黑 + 强 CRT 扫描线 + 像素网格 —— */
+/* —— 像素:马里奥天蓝天空 + 砖块地面 —— */
 [data-theme="pixel"] .bg-soft {
-  background-color: hsl(150 42% 4%);
+  background-color: hsl(213 92% 68%);
   background-image:
-    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.38) 0 2px, transparent 2px 4px),
-    linear-gradient(rgba(132, 204, 22, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(132, 204, 22, 0.07) 1px, transparent 1px);
-  background-size: 100% 4px, 16px 16px, 16px 16px;
+    /* 底部砖块地面(橙棕) + 上沿黑描边 */
+    linear-gradient(0deg, #000 0 3px, transparent 3px),
+    linear-gradient(0deg, #c2410c 0 44px, transparent 44px),
+    /* 天空像素网格点缀 */
+    linear-gradient(rgba(255, 255, 255, 0.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.10) 1px, transparent 1px);
+  background-size: 100% 44px, 100% 44px, 32px 32px, 32px 32px;
+  background-repeat: no-repeat, no-repeat, repeat, repeat;
+  background-position: left 44px bottom, bottom, top, top;
 }
 [data-theme="pixel"] .bg-soft::after { content: none; }
 
@@ -577,34 +590,95 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* —— 古朴:羊皮纸暖褐 + 纸纹 + 暖暗角(浅色更鲜明)—— */
+/* —— 古朴:青绿山水 · 月白/青墨 + 青雾 + 左侧翠竹 + 青绿远山 —— */
 [data-theme="antique"] .bg-soft {
-  background-color: hsl(38 34% 80%);
+  background-color: hsl(165 16% 88%);
   background-image:
-    radial-gradient(120% 110% at 50% 0%, transparent 52%, rgba(90, 60, 20, 0.28)),
-    radial-gradient(60rem 40rem at 80% 100%, rgba(180, 120, 60, 0.18), transparent 60%);
+    /* 左侧翠竹 */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 600' preserveAspectRatio='xMinYMax meet'%3E%3Cg opacity='0.45'%3E%3Cg stroke='%233f7a64' stroke-width='4' fill='none'%3E%3Cpath d='M34 600 V24'/%3E%3Cpath d='M80 600 V140'/%3E%3Cpath d='M28 130 H40 M28 250 H40 M28 370 H40 M28 490 H40'/%3E%3Cpath d='M74 250 H86 M74 370 H86 M74 490 H86'/%3E%3C/g%3E%3Cg fill='%234f966f'%3E%3Cpath d='M34 96 q30 -10 50 -36 q-26 8 -50 36'/%3E%3Cpath d='M34 96 q26 12 52 8 q-30 -16 -52 -8'/%3E%3Cpath d='M34 160 q-28 -6 -48 -30 q24 6 48 30'/%3E%3Cpath d='M80 210 q28 -8 46 -32 q-26 8 -46 32'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),
+    /* 青雾 / 月白晕 */
+    radial-gradient(34rem 26rem at 14% 28%, rgba(80, 150, 130, 0.14), transparent 64%),
+    radial-gradient(30rem 22rem at 86% 22%, rgba(70, 130, 145, 0.10), transparent 64%),
+    radial-gradient(120% 115% at 50% 0%, transparent 60%, rgba(40, 70, 64, 0.14));
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+  background-position: left bottom, center, center, center;
+  background-size: auto 94%, auto, auto, auto;
 }
 .dark[data-theme="antique"] .bg-soft {
-  background-color: hsl(30 26% 9%);
+  background-color: hsl(190 26% 7%);
   background-image:
-    radial-gradient(120% 110% at 50% 0%, transparent 50%, rgba(0, 0, 0, 0.5)),
-    radial-gradient(60rem 40rem at 80% 100%, rgba(180, 120, 60, 0.14), transparent 60%);
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 600' preserveAspectRatio='xMinYMax meet'%3E%3Cg opacity='0.5'%3E%3Cg stroke='%234f9c80' stroke-width='4' fill='none'%3E%3Cpath d='M34 600 V24'/%3E%3Cpath d='M80 600 V140'/%3E%3Cpath d='M28 130 H40 M28 250 H40 M28 370 H40 M28 490 H40'/%3E%3Cpath d='M74 250 H86 M74 370 H86 M74 490 H86'/%3E%3C/g%3E%3Cg fill='%235aa888'%3E%3Cpath d='M34 96 q30 -10 50 -36 q-26 8 -50 36'/%3E%3Cpath d='M34 96 q26 12 52 8 q-30 -16 -52 -8'/%3E%3Cpath d='M34 160 q-28 -6 -48 -30 q24 6 48 30'/%3E%3Cpath d='M80 210 q28 -8 46 -32 q-26 8 -46 32'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),
+    radial-gradient(34rem 26rem at 14% 28%, rgba(60, 160, 135, 0.10), transparent 64%),
+    radial-gradient(30rem 22rem at 86% 22%, rgba(50, 130, 150, 0.09), transparent 64%),
+    radial-gradient(120% 115% at 50% 0%, transparent 44%, rgba(0, 0, 0, 0.5));
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+  background-position: left bottom, center, center, center;
+  background-size: auto 94%, auto, auto, auto;
+}
+/* 底部青绿远山(三层山影) */
+[data-theme="antique"] .bg-soft::before {
+  content: '';
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 190px;
+  pointer-events: none;
+  opacity: 0.55;
+  z-index: 0;
+  background: no-repeat bottom / 100% 100%
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 190' preserveAspectRatio='none'%3E%3Cg fill='%23335c4c'%3E%3Cpath fill-opacity='0.4' d='M0 190 V120 Q150 66 320 100 Q520 138 700 88 Q900 46 1060 94 Q1140 116 1200 100 V190 Z'/%3E%3Cpath fill-opacity='0.6' d='M0 190 V146 Q180 102 380 128 Q600 160 820 122 Q1000 96 1200 134 V190 Z'/%3E%3Cpath fill-opacity='0.85' d='M0 190 V166 Q240 144 460 160 Q720 176 980 156 Q1100 148 1200 164 V190 Z'/%3E%3C/g%3E%3C/svg%3E");
 }
 [data-theme="antique"] .bg-soft::after {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.08;
+  opacity: 0.07;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* —— 中世纪:暗石黑 + 顶部烫金辉光 + 厚重暗角 + 石纹 —— */
+/* —— 中世纪:冷月石厅 + 石墙砌缝 + 纹章菱格织锦 + 钢蓝冷光 + 城垛剪影 —— */
 [data-theme="medieval"] .bg-soft {
-  background-color: hsl(28 24% 5%);
+  background-color: hsl(216 20% 8%);
   background-image:
-    radial-gradient(100% 70% at 50% -5%, rgba(201, 162, 39, 0.14), transparent 55%),
-    radial-gradient(130% 130% at 50% 50%, transparent 42%, rgba(0, 0, 0, 0.65));
+    /* 顶部冷月/烛照冷金辉光 */
+    radial-gradient(90% 55% at 50% -8%, rgba(201, 176, 121, 0.12), transparent 58%),
+    /* 两侧钢蓝月光 */
+    radial-gradient(26rem 32rem at -4% 30%, rgba(90, 122, 144, 0.12), transparent 62%),
+    radial-gradient(26rem 32rem at 104% 38%, rgba(90, 122, 144, 0.12), transparent 62%),
+    /* 底部钢蓝旌旗晕染 */
+    radial-gradient(62rem 36rem at 50% 110%, rgba(64, 92, 120, 0.18), transparent 62%),
+    /* 纹章菱格织锦(两向冷金斜栅交织) */
+    repeating-linear-gradient(45deg, rgba(201, 176, 121, 0.045) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(-45deg, rgba(201, 176, 121, 0.045) 0 1px, transparent 1px 34px),
+    /* 石墙砌缝:横向石层 + 纵向石缝 */
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.26) 0 2px, transparent 2px 72px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.18) 0 2px, transparent 2px 128px),
+    /* 做旧石面斑驳 */
+    radial-gradient(30% 22% at 22% 30%, rgba(0, 0, 0, 0.28), transparent 70%),
+    radial-gradient(26% 20% at 76% 58%, rgba(0, 0, 0, 0.24), transparent 70%),
+    /* 月夜厚重暗角 */
+    radial-gradient(135% 120% at 50% 36%, transparent 30%, rgba(0, 0, 0, 0.76));
+}
+/* 底部城堡城垛 + 角楼塔身剪影 */
+[data-theme="medieval"] .bg-soft::before {
+  content: '';
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 128px;
+  background: linear-gradient(0deg, hsl(213 16% 10%) 0 40%, hsl(210 16% 18%) 78%, transparent);
+  clip-path: polygon(
+    0 100%, 0 8%, 7% 8%, 7% 42%,
+    12% 42%, 12% 20%, 19% 20%, 19% 42%,
+    26% 42%, 26% 20%, 33% 20%, 33% 42%,
+    40% 42%, 40% 20%, 47% 20%, 47% 42%,
+    53% 42%, 53% 20%, 60% 20%, 60% 42%,
+    67% 42%, 67% 20%, 74% 20%, 74% 42%,
+    81% 42%, 81% 20%, 88% 20%, 88% 42%,
+    93% 42%, 93% 8%, 100% 8%, 100% 100%
+  );
+  pointer-events: none;
+  opacity: 0.9;
+  z-index: 0;
 }
 [data-theme="medieval"] .bg-soft::after {
   content: '';
@@ -617,12 +691,51 @@
 
 /* —— 叙利亚战损:水泥灰褐 + 浓噪点 + 暗角 + 警示斜纹 —— */
 [data-theme="wartorn"] .bg-soft {
-  background-color: hsl(32 8% 11%);
+  background-color: hsl(38 10% 8%);
   background-image:
-    radial-gradient(130% 130% at 50% 40%, transparent 38%, rgba(0, 0, 0, 0.6)),
-    repeating-linear-gradient(45deg, rgba(190, 150, 40, 0.05) 0 14px, transparent 14px 28px);
+    /* 地平线战火/夕照远光(锈陶) */
+    radial-gradient(75% 45% at 50% -6%, rgba(180, 85, 40, 0.10), transparent 60%),
+    /* 橄榄沙尘微光 */
+    radial-gradient(60% 50% at 80% 8%, rgba(120, 110, 60, 0.07), transparent 65%),
+    /* 远景废墟弹坑(大、稀疏) */
+    radial-gradient(30px 30px at 12% 34%, rgba(0,0,0,0.42) 0 30%, rgba(185,152,108,0.12) 30% 50%, transparent 52%),
+    radial-gradient(38px 38px at 79% 22%, rgba(0,0,0,0.4) 0 32%, rgba(185,152,108,0.1) 32% 52%, transparent 54%),
+    radial-gradient(24px 24px at 58% 62%, rgba(0,0,0,0.38) 0 32%, rgba(185,152,108,0.1) 32% 52%, transparent 54%),
+    radial-gradient(32px 32px at 33% 80%, rgba(0,0,0,0.38) 0 32%, rgba(185,152,108,0.1) 32% 52%, transparent 54%),
+    radial-gradient(22px 22px at 90% 78%, rgba(0,0,0,0.36) 0 32%, rgba(185,152,108,0.1) 32% 52%, transparent 54%),
+    /* 贯穿大裂缝 */
+    linear-gradient(112deg, transparent 27%, rgba(0,0,0,0.3) 28% 28.7%, transparent 30%),
+    linear-gradient(64deg, transparent 65%, rgba(0,0,0,0.24) 66% 66.6%, transparent 68%),
+    /* 外露锈钢筋 */
+    linear-gradient(126deg, transparent 47%, rgba(150,82,42,0.2) 47.6% 48.3%, transparent 49%),
+    /* 烟熏焦痕 */
+    radial-gradient(45% 34% at 18% 26%, rgba(0, 0, 0, 0.45), transparent 72%),
+    radial-gradient(40% 30% at 82% 70%, rgba(0, 0, 0, 0.48), transparent 72%),
+    /* 沙尘弥漫(暖沙覆盖) */
+    radial-gradient(120% 100% at 50% 28%, rgba(155, 130, 88, 0.05), transparent 55%),
+    /* 烧灼暗角 */
+    radial-gradient(135% 135% at 50% 40%, transparent 24%, rgba(0, 0, 0, 0.8)),
+    /* 沙尘斜纹 */
+    repeating-linear-gradient(45deg, rgba(150, 120, 70, 0.04) 0 16px, transparent 16px 32px);
 }
-.dark[data-theme="wartorn"] .bg-soft { background-color: hsl(32 8% 9%); }
+.dark[data-theme="wartorn"] .bg-soft { background-color: hsl(38 10% 7%); }
+/* 底部残垣断壁剪影(废墟天际线) */
+[data-theme="wartorn"] .bg-soft::before {
+  content: '';
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 150px;
+  background: linear-gradient(0deg, hsl(32 16% 6%) 0 32%, hsl(34 13% 9%) 72%, transparent);
+  clip-path: polygon(
+    0 100%, 0 50%, 4% 50%, 4% 32%, 9% 32%, 9% 58%, 14% 58%, 14% 26%, 18% 26%, 18% 62%,
+    23% 62%, 23% 40%, 29% 40%, 29% 22%, 33% 22%, 33% 52%, 39% 52%, 39% 35%, 44% 35%, 44% 60%,
+    50% 60%, 50% 30%, 55% 30%, 55% 50%, 61% 50%, 61% 24%, 66% 24%, 66% 57%, 72% 57%, 72% 37%,
+    77% 37%, 77% 62%, 83% 62%, 83% 32%, 88% 32%, 88% 54%, 93% 54%, 93% 42%, 100% 42%, 100% 100%
+  );
+  pointer-events: none;
+  opacity: 0.82;
+  z-index: 0;
+}
 [data-theme="wartorn"] .bg-soft::after {
   content: '';
   position: fixed;
@@ -640,7 +753,6 @@
    ================================================================= */
 [data-theme="tech"],
 [data-theme="future"],
-[data-theme="pixel"],
 [data-theme="medieval"],
 [data-theme="wartorn"] {
   --foreground: 210 40% 95%;
@@ -658,17 +770,22 @@
   --secondary: 258 26% 14%; --muted: 258 24% 14%; --border: 262 36% 18%; --input: 262 36% 18%;
 }
 [data-theme="pixel"] {
-  --background: 150 38% 5%; --card: 150 24% 8%; --popover: 150 24% 8%;
-  --secondary: 150 18% 13%; --muted: 150 16% 13%; --border: 150 24% 17%; --input: 150 24% 17%;
+  --background: 213 92% 68%; --card: 42 76% 94%; --popover: 42 76% 94%;
+  --secondary: 210 48% 85%; --muted: 210 40% 87%; --border: 0 0% 10%; --input: 0 0% 82%;
+  --foreground: 0 0% 12%; --card-foreground: 0 0% 12%; --popover-foreground: 0 0% 12%;
+  --secondary-foreground: 0 0% 12%; --muted-foreground: 0 0% 34%;
 }
 [data-theme="medieval"] {
-  --background: 28 22% 6%; --card: 28 18% 9%; --popover: 28 18% 9%;
-  --secondary: 28 13% 14%; --muted: 28 12% 14%; --border: 36 24% 20%; --input: 36 24% 20%;
+  --background: 216 20% 9%; --card: 213 19% 13%; --popover: 213 19% 13%;
+  --secondary: 213 14% 18%; --muted: 213 13% 18%; --border: 41 30% 36%; --input: 41 26% 32%;
+  /* 银白前景(取代共享冷蓝)+ 冷金调字 */
+  --foreground: 210 26% 88%; --card-foreground: 210 26% 88%; --popover-foreground: 210 26% 88%;
+  --secondary-foreground: 210 24% 86%; --muted-foreground: 210 12% 60%;
 }
 [data-theme="wartorn"] {
-  --background: 32 8% 10%; --card: 32 9% 13%; --popover: 32 9% 13%;
-  --secondary: 32 8% 18%; --muted: 32 7% 18%; --border: 35 12% 24%; --input: 35 12% 24%;
-  --foreground: 40 14% 86%; --muted-foreground: 40 10% 60%;
+  --background: 38 10% 8%; --card: 40 7% 12%; --popover: 40 7% 12%;
+  --secondary: 40 7% 16%; --muted: 40 6% 16%; --border: 26 32% 30%; --input: 26 32% 30%;
+  --foreground: 40 16% 82%; --muted-foreground: 40 9% 56%;
 }
 /* 现代 / 写实:浅色但带主题倾向(底色加深,白卡更突出,边框清晰)*/
 [data-theme="modern"] {
@@ -698,11 +815,14 @@
 [data-theme="pixel"] *,
 [data-theme="pixel"] *::before,
 [data-theme="pixel"] *::after { border-radius: 0 !important; }
+/* 像素主题下关掉 HUD 科幻角标/能量线(不搭 FC) */
+[data-theme="pixel"] .card-hud::before,
+[data-theme="pixel"] .hud-corner { display: none !important; }
 [data-theme="pixel"] .card-glass,
 [data-theme="pixel"] .card-classic,
 [data-theme="pixel"] .card-minimal {
   backdrop-filter: none !important;
-  border: 3px solid hsl(var(--primary) / 0.6) !important;
+  border: 4px solid #000 !important;
   /* 8-bit 缺角(四角切方块)*/
   clip-path: polygon(
     6px 0, calc(100% - 6px) 0, calc(100% - 6px) 6px, 100% 6px,
@@ -757,17 +877,134 @@
   box-shadow: 0 0 28px -10px hsl(var(--primary) / 0.6) !important;
 }
 
-/* ========== 中世纪:双层烫金内框(手抄本)========== */
+/* ========== 中世纪:手抄本石板 —— 烫金双框 + 羊皮纸内纹 + 浮雕饰带 ========== */
+/* 复用 HUD 伪元素:每张节点卡 = 哥特窗水印 + 四角金色花饰(取代科幻角标) */
+[data-theme="medieval"] .card-hud { isolation: isolate; }
+[data-theme="medieval"] .card-hud::before {
+  content: '' !important;
+  display: block !important;
+  position: absolute;
+  top: 10px; left: 50%; right: auto; bottom: auto;
+  transform: translateX(-50%);
+  width: 74%; height: calc(100% - 20px);
+  background: top center / contain no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 60'%3E%3Cg fill='none' stroke='%23c9b079' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M6 60 L6 18 Q9 4 24 2 Q39 4 42 18 L42 60'/%3E%3Cpath d='M24 60 L24 16'/%3E%3Cpath d='M13 60 L13 30 Q14 22 19 21 Q24 22 23 30 L23 60'/%3E%3Cpath d='M35 60 L35 30 Q34 22 29 21 Q24 22 25 30 L25 60'/%3E%3Ccircle cx='24' cy='11' r='3.2'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.22;
+  z-index: -1;
+  pointer-events: none;
+}
+[data-theme="medieval"] .hud-corner {
+  border: none !important;
+  width: 16px !important; height: 16px !important;
+  opacity: 0.75;
+  background: center / contain no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cg fill='none' stroke='%23c9b079' stroke-width='1.3' stroke-linecap='round'%3E%3Cpath d='M1 9 Q1 1 9 1'/%3E%3Cpath d='M1 6 Q1 4 4 4 Q4 1 6 1'/%3E%3Ccircle cx='4' cy='4' r='1.1'/%3E%3C/g%3E%3C/svg%3E");
+}
+[data-theme="medieval"] .hud-tr { transform: scaleX(-1); }
+[data-theme="medieval"] .hud-bl { transform: scaleY(-1); }
+[data-theme="medieval"] .hud-br { transform: scale(-1, -1); }
+[data-theme="medieval"] .group:hover .card-hud::before { opacity: 0.34; }
+[data-theme="medieval"] .group:hover .hud-corner { opacity: 1; }
 [data-theme="medieval"] .card-glass,
-[data-theme="medieval"] .card-classic {
-  border: 1px solid hsl(var(--primary) / 0.5) !important;
+[data-theme="medieval"] .card-classic,
+[data-theme="medieval"] .card-minimal {
+  backdrop-filter: none !important;
+  border: 1px solid hsl(var(--primary) / 0.55) !important;
   box-shadow:
     inset 0 0 0 3px hsl(var(--card)),
-    inset 0 0 0 4px hsl(var(--primary) / 0.35),
-    0 6px 22px -8px rgba(0, 0, 0, 0.5) !important;
+    inset 0 0 0 4px hsl(var(--primary) / 0.4),
+    inset 0 0 26px rgba(90, 110, 130, 0.12),
+    0 6px 22px -8px rgba(0, 0, 0, 0.55) !important;
+  background-image:
+    /* 顶部浮雕冷金饰带 */
+    linear-gradient(180deg, hsl(var(--primary) / 0.5) 0 1px, hsl(var(--primary) / 0.12) 1px 3px, transparent 3px),
+    /* 银灰牛皮竖纹 */
+    repeating-linear-gradient(90deg, rgba(150, 165, 180, 0.04) 0 1px, transparent 1px 7px),
+    /* 上左冷金微光 + 下右钢蓝晕 */
+    radial-gradient(10rem 8rem at 0% 0%, rgba(201, 176, 121, 0.10), transparent 60%),
+    radial-gradient(10rem 8rem at 100% 100%, rgba(64, 92, 120, 0.12), transparent 60%) !important;
+  background-repeat: no-repeat !important;
+}
+
+/* 哥特尖拱外形:仅节点卡(a[data-node-uuid] 内),固定 34px 拱高 + 顶部留白避免裁字 */
+[data-theme="medieval"] [data-node-uuid] .card-hud {
+  padding-top: 2.75rem !important;
+  clip-path: polygon(
+    0 100%, 0 34px,
+    10% 14px, 26% 4px, 44% 0, 56% 0,
+    74% 4px, 90% 14px, 100% 34px,
+    100% 100%
+  );
+  border: none !important;
+  box-shadow:
+    inset 0 0 0 3px hsl(var(--card)),
+    inset 0 0 0 4px hsl(var(--primary) / 0.4),
+    inset 0 0 26px rgba(90, 110, 130, 0.12) !important;
+  /* clip-path 会裁掉外阴影,改用 drop-shadow 沿尖拱描金边 + 落影 */
+  filter:
+    drop-shadow(0 -1px 0 hsl(var(--primary) / 0.85))
+    drop-shadow(0 1px 0 hsl(var(--primary) / 0.6))
+    drop-shadow(1px 0 0 hsl(var(--primary) / 0.6))
+    drop-shadow(-1px 0 0 hsl(var(--primary) / 0.6))
+    drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5));
+}
+[data-theme="medieval"] [data-node-uuid] .group:hover .card-hud,
+[data-theme="medieval"] [data-node-uuid]:hover .card-hud {
+  filter:
+    drop-shadow(0 -1px 0 hsl(var(--primary)))
+    drop-shadow(0 1px 0 hsl(var(--primary) / 0.7))
+    drop-shadow(1px 0 0 hsl(var(--primary) / 0.7))
+    drop-shadow(-1px 0 0 hsl(var(--primary) / 0.7))
+    drop-shadow(0 12px 22px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 0 10px hsl(var(--primary) / 0.5));
+}
+/* 上方两角花饰下移到拱肩(否则被尖拱裁掉) */
+[data-theme="medieval"] .hud-tl,
+[data-theme="medieval"] .hud-tr { top: 34px; }
+/* 拱顶键石盾徽(复用 card-shine::before,取代 ❧) */
+[data-theme="medieval"] .card-hud.card-shine::before {
+  content: '';
+  position: absolute;
+  top: 1px; left: 50%; right: auto; bottom: auto;
+  transform: translateX(-50%);
+  width: 17px; height: 19px;
+  background: center / contain no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 18'%3E%3Cpath d='M8 1 L15 3 V8 Q15 14 8 17 Q1 14 1 8 V3 Z' fill='%231b2128' stroke='%23c9b079' stroke-width='1.2'/%3E%3Cpath d='M8 1 V17' stroke='%23c9b079' stroke-width='0.8' opacity='0.6'/%3E%3Cpath d='M1.5 6 H14.5' stroke='%23c9b079' stroke-width='0.8' opacity='0.6'/%3E%3C/svg%3E");
+  color: transparent;
+  font-size: 0;
+  line-height: 0;
+  z-index: 4;
+  opacity: 0.95;
+}
+/* 品牌标题前的皇冠纹章 */
+[data-theme="medieval"] .brand-title::before {
+  content: '';
+  display: inline-block;
+  width: 0.95em; height: 0.95em;
+  margin-right: 0.42em;
+  vertical-align: -0.1em;
+  background: center / contain no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23c9b079' d='M2 8 L6 14 H18 L22 8 L16.5 11 L12 4.5 L7.5 11 Z'/%3E%3Crect x='6' y='15' width='12' height='2.6' fill='%23c9b079'/%3E%3Ccircle cx='2' cy='8' r='1.5' fill='%23c9b079'/%3E%3Ccircle cx='22' cy='8' r='1.5' fill='%23c9b079'/%3E%3Ccircle cx='12' cy='4.5' r='1.5' fill='%23c9b079'/%3E%3C/svg%3E");
+}
+/* 顶部大卡(吞吐量/带宽/访客)哥特窗水印 */
+[data-theme="medieval"] .panel-arch { isolation: isolate; }
+[data-theme="medieval"] .panel-arch::before {
+  content: '';
+  position: absolute;
+  top: 8px; left: 50%; transform: translateX(-50%);
+  width: 46%; height: calc(100% - 16px);
+  background: top center / contain no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 60'%3E%3Cg fill='none' stroke='%23c9b079' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M6 60 L6 18 Q9 4 24 2 Q39 4 42 18 L42 60'/%3E%3Cpath d='M24 60 L24 16'/%3E%3Cpath d='M13 60 L13 30 Q14 22 19 21 Q24 22 23 30 L23 60'/%3E%3Cpath d='M35 60 L35 30 Q34 22 29 21 Q24 22 25 30 L25 60'/%3E%3Ccircle cx='24' cy='11' r='3.2'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.16;
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* ========== 战损:撕裂破边 + 歪斜 + 锈渍褪色 + 顶部警示带 ========== */
+/* 强制锈血红强调,关闭不搭的 HUD 科幻角标 */
+html[data-theme="wartorn"] { --primary: 18 54% 47%; --accent: 18 54% 47%; --ring: 18 54% 47%; }
+[data-theme="wartorn"] .card-hud::before,
+[data-theme="wartorn"] .hud-corner { display: none !important; }
 [data-theme="wartorn"] .card-glass,
 [data-theme="wartorn"] .card-classic,
 [data-theme="wartorn"] .card-minimal {
@@ -782,9 +1019,29 @@
   );
   filter: drop-shadow(3px 4px 1px rgba(0, 0, 0, 0.45)) grayscale(0.18);
   background-image:
-    linear-gradient(180deg, rgba(190, 150, 40, 0.65) 0 3px, transparent 3px),
-    radial-gradient(22rem 13rem at 108% -12%, rgba(120, 60, 30, 0.2), transparent 60%),
-    radial-gradient(16rem 10rem at -10% 118%, rgba(80, 70, 40, 0.18), transparent 60%) !important;
+    /* 顶部锈陶警示带 */
+    linear-gradient(180deg, rgba(165, 75, 38, 0.8) 0 3px, transparent 3px),
+    /* 外露锈钢筋(斜向) */
+    linear-gradient(48deg, transparent 70.5%, rgba(150, 82, 42, 0.55) 71% 72%, transparent 72.6%),
+    linear-gradient(128deg, transparent 24%, rgba(120, 70, 38, 0.42) 24.6% 25.4%, transparent 26%),
+    /* 混凝土裂缝(粗 + 分叉) */
+    linear-gradient(116deg, transparent 42%, rgba(0, 0, 0, 0.5) 44% 46%, transparent 48%),
+    linear-gradient(150deg, transparent 58%, rgba(0, 0, 0, 0.34) 59.5% 60.5%, transparent 62%),
+    /* 弹孔/炮击坑:黑心 + 暗环 + 沙尘冲击亮环 */
+    radial-gradient(10px 10px at 9% 14%, rgba(0,0,0,0.82) 0 26%, rgba(0,0,0,0.42) 26% 54%, rgba(205,172,120,0.36) 54% 78%, transparent 80%),
+    radial-gradient(7px 7px at 16% 9%, rgba(0,0,0,0.78) 0 28%, rgba(0,0,0,0.4) 28% 56%, rgba(205,172,120,0.32) 56% 80%, transparent 82%),
+    radial-gradient(13px 13px at 6% 31%, rgba(0,0,0,0.8) 0 24%, rgba(0,0,0,0.42) 24% 52%, rgba(205,172,120,0.34) 52% 76%, transparent 78%),
+    radial-gradient(9px 9px at 91% 13%, rgba(0,0,0,0.8) 0 26%, rgba(0,0,0,0.42) 26% 54%, rgba(205,172,120,0.34) 54% 78%, transparent 80%),
+    radial-gradient(7px 7px at 95% 27%, rgba(0,0,0,0.76) 0 28%, rgba(0,0,0,0.4) 28% 56%, rgba(205,172,120,0.32) 56% 80%, transparent 82%),
+    radial-gradient(12px 12px at 89% 85%, rgba(0,0,0,0.8) 0 25%, rgba(0,0,0,0.42) 25% 53%, rgba(205,172,120,0.34) 53% 77%, transparent 79%),
+    radial-gradient(8px 8px at 94% 92%, rgba(0,0,0,0.78) 0 27%, rgba(0,0,0,0.4) 27% 55%, rgba(205,172,120,0.32) 55% 79%, transparent 81%),
+    radial-gradient(9px 9px at 7% 87%, rgba(0,0,0,0.8) 0 26%, rgba(0,0,0,0.42) 26% 54%, rgba(205,172,120,0.34) 54% 78%, transparent 80%),
+    radial-gradient(7px 7px at 49% 8%, rgba(0,0,0,0.72) 0 28%, rgba(0,0,0,0.36) 28% 56%, rgba(205,172,120,0.3) 56% 80%, transparent 82%),
+    /* 底部沙尘堆积 */
+    linear-gradient(0deg, rgba(150, 125, 80, 0.12) 0 5px, transparent 18px),
+    /* 锈陶渍 + 烟熏角 */
+    radial-gradient(22rem 13rem at 108% -12%, rgba(165, 78, 36, 0.22), transparent 60%),
+    radial-gradient(14rem 9rem at -8% 116%, rgba(62, 58, 50, 0.24), transparent 60%) !important;
   background-repeat: no-repeat !important;
   transform: rotate(-0.5deg);
   transition: transform 0.2s ease, filter 0.2s ease !important;
@@ -794,14 +1051,71 @@
   transform: rotate(0deg) translateY(-3px) !important;
   filter: drop-shadow(4px 7px 2px rgba(0, 0, 0, 0.55)) grayscale(0) !important;
 }
+/* 战损进度条:锈蚀血条(替代常规绿黄红) */
+[data-theme="wartorn"] [role="progressbar"] {
+  background-color: hsl(40 8% 13%) !important;
+  border-radius: 1px !important;
+}
+[data-theme="wartorn"] [role="progressbar"] > * {
+  background-color: #7a3c1e !important;
+  background-image: linear-gradient(90deg, #4f2c13, #8a4322 55%, #a85a2c) !important;
+}
+[data-theme="wartorn"] [role="progressbar"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(90deg, transparent 0 6px, rgba(0, 0, 0, 0.5) 6px 7.5px),
+    repeating-linear-gradient(90deg, transparent 0 2px, rgba(0, 0, 0, 0.1) 2px 3px);
+}
 
-/* ========== 古朴:做旧纸张内晕 + 墨色边 ========== */
+/* ========== 古朴:古籍册页 —— 墨色双线边 + 冰裂开片 + 做旧泛黄 + 朱砂印 + 回纹 ========== */
+/* HUD 科幻件复用为中式:顶部回纹饰带 + 四角回纹 + 朱砂方印(取代科幻角标) */
+[data-theme="antique"] .card-hud { isolation: isolate; }
+[data-theme="antique"] .card-hud::before {
+  content: '' !important;
+  display: block !important;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: auto;
+  height: 10px;
+  background: repeat-x left top / 14px 10px
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 12'%3E%3Cpath d='M3 11 V3 H10 V10 H6 V6' fill='none' stroke='%233f6a5c' stroke-width='1.3'/%3E%3C/svg%3E");
+  opacity: 0.5;
+  z-index: 3;
+  pointer-events: none;
+}
+[data-theme="antique"] .hud-corner {
+  border: none !important;
+  width: 16px !important; height: 16px !important;
+  opacity: 0.65;
+  background: center / contain no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 15 V2 H15 M2 6 H11 V11 H6 V8' fill='none' stroke='%233f6a5c' stroke-width='1.3'/%3E%3C/svg%3E");
+}
+[data-theme="antique"] .hud-tr { transform: scaleX(-1); }
+[data-theme="antique"] .hud-bl { transform: scaleY(-1); }
+[data-theme="antique"] .hud-br { transform: scale(-1, -1); }
 [data-theme="antique"] .card-glass,
-[data-theme="antique"] .card-classic {
-  border: 1px solid hsl(34 34% 48%) !important;
+[data-theme="antique"] .card-classic,
+[data-theme="antique"] .card-minimal {
+  -webkit-backdrop-filter: blur(14px) saturate(1.15) !important;
+  backdrop-filter: blur(14px) saturate(1.15) !important;
+  background-color: hsl(var(--card) / 0.32) !important;
+  border: 1px solid hsl(var(--border) / 0.6) !important;
   box-shadow:
-    inset 0 0 34px rgba(120, 80, 30, 0.14),
-    0 4px 14px -4px rgba(80, 50, 20, 0.25) !important;
+    inset 0 0 0 2px hsl(var(--card) / 0.4),
+    inset 0 0 0 3px hsl(var(--primary) / 0.32),
+    inset 0 0 30px hsl(170 30% 50% / 0.08),
+    0 4px 16px -6px rgba(20, 50, 44, 0.3) !important;
+  background-image:
+    /* 冰裂开片细纹(青墨) */
+    linear-gradient(58deg, transparent 39%, rgba(40, 80, 70, 0.12) 39.5% 40%, transparent 40.5%),
+    linear-gradient(-37deg, transparent 62%, rgba(40, 80, 70, 0.10) 62.4% 62.8%, transparent 63.2%),
+    linear-gradient(82deg, transparent 73%, rgba(40, 80, 70, 0.08) 73.3% 73.7%, transparent 74%),
+    /* 青雾角 */
+    radial-gradient(9rem 7rem at 100% 0%, rgba(90, 160, 140, 0.10), transparent 60%),
+    radial-gradient(9rem 7rem at 0% 100%, rgba(70, 130, 130, 0.08), transparent 60%) !important;
+  background-repeat: no-repeat !important;
 }
 
 /* ========== 简洁现代:超大圆角 · 无边 · 轻柔浮起 ========== */
@@ -835,18 +1149,23 @@
   transform: translateY(-3px);
 }
 [data-theme="medieval"] .card-glass:hover,
-[data-theme="medieval"] .card-classic:hover {
+[data-theme="medieval"] .card-classic:hover,
+[data-theme="medieval"] .card-minimal:hover {
   box-shadow:
     inset 0 0 0 3px hsl(var(--card)),
-    inset 0 0 0 4px hsl(var(--primary) / 0.65),
-    0 10px 28px -8px rgba(0, 0, 0, 0.6) !important;
+    inset 0 0 0 4px hsl(var(--primary) / 0.7),
+    inset 0 0 30px rgba(120, 145, 170, 0.16),
+    0 10px 28px -8px rgba(0, 0, 0, 0.6),
+    0 0 26px -6px hsl(var(--primary) / 0.55) !important;
   transform: translateY(-2px);
 }
 [data-theme="antique"] .card-glass:hover,
 [data-theme="antique"] .card-classic:hover {
   box-shadow:
-    inset 0 0 42px rgba(120, 80, 30, 0.22),
-    0 8px 20px -4px rgba(80, 50, 20, 0.35) !important;
+    inset 0 0 0 2px hsl(var(--card) / 0.4),
+    inset 0 0 0 3px hsl(var(--primary) / 0.5),
+    inset 0 0 40px hsl(170 35% 50% / 0.14),
+    0 8px 22px -6px rgba(20, 50, 44, 0.4) !important;
   transform: translateY(-2px);
 }
 [data-theme="modern"] .card-glass:hover,
@@ -931,31 +1250,144 @@
   transition: color 0.2s ease;
 }
 [data-theme="medieval"] .glow-ring::after {
-  content: '❧';
+  content: '';
   position: absolute;
-  bottom: 2px; right: 7px; top: auto; left: auto;
+  bottom: 8px; right: 8px; top: auto; left: auto;
+  width: 14px; height: 14px;
   inset: auto;
-  background: none;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 30%, hsl(206 26% 42%), hsl(210 30% 24%)),
+    repeating-conic-gradient(from 0deg, hsl(208 24% 34%) 0 18deg, hsl(210 26% 26%) 18deg 36deg);
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.65), 0 1px 2px rgba(0, 0, 0, 0.55);
   filter: none;
-  transform: rotate(180deg);
-  color: hsl(var(--primary) / 0.55);
-  font-size: 13px;
-  line-height: 1;
+  transform: none;
+  color: transparent;
+  opacity: 0.9;
 }
 [data-theme="medieval"] .card-shine:hover::before { color: hsl(var(--primary)); }
 
-/* ===== 古朴:火漆封印角标 ===== */
-[data-theme="antique"] .glow-ring::after {
-  content: '❉';
+/* 中世纪:站点标题用哥特黑体(烫金渐变) */
+[data-theme="medieval"] .brand-title {
+  font-family: 'Pirata One', 'Cinzel Decorative', 'Cinzel', serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+/* 中世纪进度条:暗石槽 + 冷金镶嵌 + 金属高光(保留负载色作底) */
+[data-theme="medieval"] [role="progressbar"] {
+  background-color: hsl(213 14% 16%) !important;
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.3) !important;
+  border-radius: 1px !important;
+}
+[data-theme="medieval"] [role="progressbar"]::after {
+  content: '';
   position: absolute;
-  bottom: 6px; right: 9px; top: auto; left: auto;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(180deg, hsl(0 0% 100% / 0.2) 0 42%, transparent 55%);
+}
+
+/* ===== 古朴:朱砂方印(右下角,复用 glow-ring::after)===== */
+[data-theme="antique"] .glow-ring::after {
+  content: '古';
+  position: absolute;
+  bottom: 9px; right: 10px; top: auto; left: auto;
   inset: auto;
-  background: none;
+  width: 19px; height: 19px;
+  display: flex; align-items: center; justify-content: center;
+  background: #9e2b25;
+  border-radius: 2px;
   filter: none;
-  transform: none;
-  color: hsl(var(--primary) / 0.5);
-  font-size: 15px;
+  transform: rotate(-4deg);
+  color: #f3e7d4;
+  font-family: 'Songti SC', 'STSong', 'SimSun', serif;
+  font-size: 12px;
   line-height: 1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+  z-index: 4;
+}
+
+/* ===== 古朴:背景法帖(李白《上阳台帖》草书)—— 右侧专属竖带,每列两句 ===== */
+.antique-rubbing { display: none; }
+[data-theme="antique"] .antique-rubbing { display: block; }
+[data-theme="antique"] .antique-rubbing-text {
+  position: absolute;
+  top: 88px; right: 24px; bottom: 24px;
+  writing-mode: vertical-rl;
+  font-family: 'Liu Jian Mao Cao', 'Long Cang', 'Ma Shan Zheng', cursive, serif;
+  font-size: clamp(2.8rem, 5.6vw, 5.2rem);
+  line-height: 1.0;
+  letter-spacing: 0.02em;
+  color: rgba(28, 58, 50, 0.42);
+  overflow: hidden;
+}
+[data-theme="antique"] .antique-rubbing-text p {
+  margin: 0;
+  padding: 0 0.12em;        /* 列间距 */
+}
+.dark[data-theme="antique"] .antique-rubbing-text {
+  color: rgba(150, 214, 192, 0.28);
+}
+/* 大屏:主内容整体左移,右侧让出诗句专属带 */
+@media (min-width: 1200px) {
+  [data-theme="antique"] main {
+    padding-right: min(20vw, 340px) !important;
+  }
+}
+/* 超宽屏:左侧统计栏就位,主内容留出左边距 */
+@media (min-width: 1750px) {
+  [data-theme="antique"] main {
+    padding-left: 68px !important;
+  }
+}
+/* 真迹原图层:存为 public/shangyangtie.png 即自动显示(居中,墨色融入背景)*/
+[data-theme="antique"] .antique-tie {
+  position: absolute;
+  top: 9vh; bottom: 9vh; left: 50%;
+  transform: translateX(-50%);
+  width: min(74vw, 1180px);
+  background: center / contain no-repeat url("/shangyangtie.png");
+  opacity: 0.92;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+.dark[data-theme="antique"] .antique-tie {
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+/* 品牌站名用毛笔书法 */
+[data-theme="antique"] .brand-title {
+  font-family: 'Ma Shan Zheng', 'Songti SC', serif;
+  letter-spacing: 0.04em;
+}
+/* 古朴进度条:青瓷槽 + 竹青条 + 竹节分隔 */
+[data-theme="antique"] [role="progressbar"] {
+  background-color: hsl(165 14% 76%) !important;
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.3) !important;
+  border-radius: 1px !important;
+}
+.dark[data-theme="antique"] [role="progressbar"] {
+  background-color: hsl(190 16% 18%) !important;
+}
+[data-theme="antique"] [role="progressbar"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(90deg, transparent 0 14px, rgba(30, 70, 60, 0.22) 14px 15px);
+}
+/* 古朴:顶部大卡水印改朱砂闲章(覆盖 panel-arch 的中世纪哥特窗) */
+[data-theme="antique"] .panel-arch::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: auto; right: 14px; bottom: auto;
+  transform: translateY(-50%);
+  width: 64px; height: 64px;
+  background: center / contain no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Cg opacity='0.5' fill='none' stroke='%239e2b25' stroke-width='3'%3E%3Crect x='3' y='3' width='54' height='54' rx='3'/%3E%3Cpath d='M14 13 V47 M30 13 V47 M46 13 V47 M13 22 H47 M13 38 H47'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.5;
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* Animations */
@@ -1187,6 +1619,44 @@ kbd {
 /* Scrollbar gutter */
 .scrollbar-gutter {
   scrollbar-gutter: stable;
+}
+
+/* ===== HUD 科幻卡片装饰(角标 + 顶部能量线 + 悬停辉光,颜色跟随强调色 --primary) ===== */
+.card-hud { position: relative; }
+
+/* 顶部能量线 */
+.card-hud::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 14px; right: 14px;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.65), transparent);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 0.3s ease;
+}
+
+/* 四角 corner brackets */
+.hud-corner {
+  position: absolute;
+  width: 10px; height: 10px;
+  border: 0 solid hsl(var(--primary));
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 0.3s ease, width 0.3s ease, height 0.3s ease;
+}
+.hud-tl { top: 6px; left: 6px; border-top-width: 1.5px; border-left-width: 1.5px; }
+.hud-tr { top: 6px; right: 6px; border-top-width: 1.5px; border-right-width: 1.5px; }
+.hud-bl { bottom: 6px; left: 6px; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+.hud-br { bottom: 6px; right: 6px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+
+/* 悬停:角标展开、能量线增亮、整卡辉光 */
+.group:hover .hud-corner { opacity: 0.9; width: 15px; height: 15px; }
+.group:hover .card-hud::before { opacity: 1; }
+.group:hover .card-hud {
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.3), 0 10px 34px -10px hsl(var(--primary) / 0.4);
 }
 
 /* 系统「减弱动态效果」:停掉入场/跑马灯/脉冲等 CSS 动画与过渡 */

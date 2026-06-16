@@ -72,7 +72,7 @@ export function Navbar({
               className="w-7 h-7 rounded-lg shrink-0 ring-1 ring-border/50 group-hover/brand:ring-primary/50 transition-all"
             />
           )}
-          <span className="font-bold text-base sm:text-lg tracking-wide truncate bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent group-hover/brand:from-primary group-hover/brand:to-primary transition-all">
+          <span className="brand-title font-bold text-base sm:text-lg tracking-wide truncate bg-gradient-to-r from-primary to-foreground bg-clip-text text-transparent group-hover/brand:from-primary group-hover/brand:to-primary transition-all">
             {siteName}
           </span>
         </a>

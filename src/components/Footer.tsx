@@ -1,5 +1,5 @@
 import { parseGitRepo } from "../utils/git"
-import { ExternalLink, HardDriveDownload, FolderSync } from 'lucide-react'
+import { ExternalLink, FolderSync } from 'lucide-react'
 import { useLatestVersion } from '../hooks/useLatestVersion'
 
 export function Footer({ text, repo, dist_page }: { text?: string, repo?: string, dist_page?: string }) {
@@ -29,15 +29,6 @@ export function Footer({ text, repo, dist_page }: { text?: string, repo?: string
             </a>
           )}
         </span>
-        <a
-          href="download.html"
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center hover:text-primary transition-colors"
-        >
-          <HardDriveDownload className="inline-block w-3 h-3 mr-1" />
-          提取主题
-        </a>
         {outdated && laststDist && (
           <a
             href={laststDist}

@@ -15,7 +15,7 @@ const THEME_HUES: Record<string, number[]> = {
   future: [263, 292, 199, 280],
   pixel: [110, 142, 160, 100],
   realistic: [215, 220, 210, 218],
-  antique: [32, 25, 40, 28],
+  antique: [170, 190, 160, 180],
   medieval: [42, 36, 28, 45],
   wartorn: [38, 30, 25, 42],
 }
@@ -109,6 +109,17 @@ export function Background({ showParticles = true }: Props) {
       />
       {/* Base gradient */}
       <div className="fixed inset-0 -z-10 bg-soft" aria-hidden />
+      {/* 古朴:背景法帖摹本(李白《上阳台帖》草书,按句分列) */}
+      <div className="fixed inset-0 -z-10 antique-rubbing pointer-events-none" aria-hidden>
+        <div className="antique-rubbing-text">
+          <p>山高水长　物象千万</p>
+          <p>非有老笔　清壮可穷</p>
+          <p>十八日　上阳台书</p>
+          <p>太白</p>
+        </div>
+        {/* 真迹原图层:把《上阳台帖》图片存为 public/shangyangtie.png 即自动显示 */}
+        <div className="antique-tie" />
+      </div>
       {/* Particles */}
       {showParticles && <Particles enabled={true} />}
     </>

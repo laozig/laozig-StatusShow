@@ -12,16 +12,21 @@ const MAP_W = 900
 const MAP_H = 520
 const GEO_URL = `${import.meta.env.BASE_URL}world.geo.json`
 
-interface Accent { h: number; s: number }
+interface Accent { h: number; s: number; isLight: boolean }
 
-/** 读取当前强调色 HSL(由 data-accent 注入的 --primary) */
+/** 读取当前强调色 HSL(--primary)与背景明暗(--background 亮度) */
 function readAccent(): Accent {
-  if (typeof document === 'undefined') return { h: 189, s: 90 }
-  const raw = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()
-  const parts = raw.split(/\s+/)
+  if (typeof document === 'undefined') return { h: 189, s: 90, isLight: false }
+  const cs = getComputedStyle(document.documentElement)
+  const parts = cs.getPropertyValue('--primary').trim().split(/\s+/)
   const h = parseFloat(parts[0])
   const s = parseFloat(parts[1])
-  return { h: Number.isFinite(h) ? h : 189, s: Number.isFinite(s) ? s : 90 }
+  const bgL = parseFloat(cs.getPropertyValue('--background').trim().split(/\s+/)[2])
+  return {
+    h: Number.isFinite(h) ? h : 189,
+    s: Number.isFinite(s) ? s : 90,
+    isLight: Number.isFinite(bgL) ? bgL > 50 : false,
+  }
 }
 
 const cnameMap = new Map<string, string>()
@@ -223,21 +228,23 @@ export function WorldMap({ nodes, onOpen }: Props) {
         className="relative w-full overflow-hidden rounded-xl border border-border/60"
         style={{
           aspectRatio: `${MAP_W} / ${MAP_H}`,
-          background: `radial-gradient(120% 90% at 50% -10%, hsl(${accent.h} ${Math.min(accent.s, 60)}% 12%), hsl(${accent.h} 18% 5%))`,
+          background: accent.isLight
+            ? `radial-gradient(120% 90% at 50% -10%, hsl(${accent.h} ${Math.min(accent.s, 45)}% 82%), hsl(var(--background)))`
+            : `radial-gradient(120% 90% at 50% -10%, hsl(${accent.h} ${Math.min(accent.s, 60)}% 12%), hsl(${accent.h} 18% 5%))`,
         }}
       >
         <div ref={wrapRef} className="absolute inset-0" />
 
         {error && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center text-sm text-white/80">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center text-sm text-foreground">
             <AlertTriangle className="h-5 w-5 text-amber-400" />
             <div>地图加载失败</div>
-            <div className="text-xs text-white/50 break-all">{error.message}</div>
+            <div className="text-xs text-muted-foreground break-all">{error.message}</div>
           </div>
         )}
 
         {!error && ready && total === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center text-sm text-white/55 pointer-events-none">
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground pointer-events-none">
             没有节点设置过国家代码
           </div>
         )}
@@ -255,7 +262,7 @@ export function WorldMap({ nodes, onOpen }: Props) {
           />
         )}
 
-        <div className="absolute bottom-3 right-4 z-10 font-mono text-sm font-semibold tracking-wider text-white/85 pointer-events-none uppercase">
+        <div className="absolute bottom-3 right-4 z-10 font-mono text-sm font-semibold tracking-wider text-foreground/70 pointer-events-none uppercase">
           {total} nodes
         </div>
       </div>
@@ -265,14 +272,21 @@ export function WorldMap({ nodes, onOpen }: Props) {
 
 function buildOption(byCountry: Map<string, CountryEntry>, accent: Accent) {
   const entries = [...byCountry.entries()].filter(([a2]) => knownA2.has(a2))
+  const { h, s, isLight } = accent
 
-  const accentColor = `hsl(${accent.h} ${accent.s}% 56%)`
-  const accentGlow = `hsl(${accent.h} ${accent.s}% 60% / 0.55)`
+  // 亮主题(像素等)用浅陆地 + 黑描边;暗主题保持深色科技风
+  const land = isLight ? `hsl(${h} 32% 80%)` : 'rgba(148,163,184,0.08)'
+  const landBorder = isLight ? 'hsl(0 0% 16% / 0.6)' : `hsl(${h} ${s}% 55% / 0.16)`
+  const landBorderW = isLight ? 1 : 0.5
+  const activeLand = isLight ? `hsl(${h} ${Math.min(s, 70)}% 58%)` : `hsl(${h} ${Math.min(s, 70)}% 26%)`
+  const emphasisLand = isLight ? `hsl(${h} ${s}% 48%)` : `hsl(${h} ${s}% 40%)`
+  const accentColor = isLight ? `hsl(${h} ${s}% 38%)` : `hsl(${h} ${s}% 56%)`
+  const accentGlow = isLight ? `hsl(${h} ${s}% 42% / 0.5)` : `hsl(${h} ${s}% 60% / 0.55)`
 
-  // 有节点的国家在底图上轻微高亮,营造层次
+  // 有节点的国家在底图上高亮,营造层次
   const regions = entries.map(([a2]) => ({
     name: a2,
-    itemStyle: { areaColor: `hsl(${accent.h} ${Math.min(accent.s, 70)}% 26%)` },
+    itemStyle: { areaColor: activeLand },
   }))
 
   // 每个国家一个脉冲光点(质心),大小随节点数,全在线=强调色,有离线=琥珀
@@ -298,6 +312,9 @@ function buildOption(byCountry: Map<string, CountryEntry>, accent: Accent) {
     })
     .filter((x): x is NonNullable<typeof x> => x != null)
 
+  const tipBg = isLight ? 'rgba(255,255,255,0.97)' : 'rgba(15,18,30,0.95)'
+  const tipText = isLight ? '#1f2937' : '#e5e7eb'
+
   return {
     backgroundColor: 'transparent',
     geo: {
@@ -309,23 +326,23 @@ function buildOption(byCountry: Map<string, CountryEntry>, accent: Accent) {
       selectedMode: false,
       silent: false,
       itemStyle: {
-        areaColor: 'rgba(148,163,184,0.08)',
-        borderColor: `hsl(${accent.h} ${accent.s}% 55% / 0.16)`,
-        borderWidth: 0.5,
+        areaColor: land,
+        borderColor: landBorder,
+        borderWidth: landBorderW,
       },
       emphasis: {
         label: { show: false },
-        itemStyle: { areaColor: `hsl(${accent.h} ${accent.s}% 40%)` },
+        itemStyle: { areaColor: emphasisLand },
       },
       regions,
     },
     tooltip: {
       trigger: 'item' as const,
-      backgroundColor: 'rgba(15,18,30,0.95)',
-      borderColor: `hsl(${accent.h} ${accent.s}% 55% / 0.4)`,
+      backgroundColor: tipBg,
+      borderColor: `hsl(${h} ${s}% 55% / 0.4)`,
       borderWidth: 1,
       padding: [8, 12] as [number, number],
-      textStyle: { color: '#e5e7eb', fontSize: 12 },
+      textStyle: { color: tipText, fontSize: 12 },
       formatter: (p: any) => {
         const d = p?.data
         if (!d?.a2) return ''

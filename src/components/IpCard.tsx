@@ -16,7 +16,7 @@ export function IpCard() {
   if (error) return null
 
   return (
-    <div className="card-glass rounded-xl px-4 py-3 animate-slide-up">
+    <div className="card-glass rounded-xl px-4 py-3 animate-slide-up relative panel-arch">
       <div className="flex items-center gap-2 mb-2">
         <Globe className="h-3.5 w-3.5 text-primary" />
         <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
