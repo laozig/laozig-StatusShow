@@ -26,8 +26,10 @@ import {
   computeLatencyStats,
   latencyQuality,
   latencyYDomain,
+  type ChartPoint,
   type LatencyStats,
 } from '../utils/latency'
+import { streamUnlockToneClass, type StreamUnlockView } from '../hooks/useStreamUnlocks'
 import { useNodeLatency } from '../hooks/useNodeLatency'
 import type { BackendPool } from '../api/pool'
 import type { HistorySample, LatencyType, Node, NodeMeta, TaskQueryResult } from '../types'
@@ -51,9 +53,10 @@ interface Props {
   onClose: () => void
   showSource?: boolean
   pool: BackendPool | null
+  unlocks?: StreamUnlockView[]
 }
 
-export function NodeDetail({ node, onClose, showSource, pool }: Props) {
+export function NodeDetail({ node, onClose, showSource, pool, unlocks = [] }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const [stuck, setStuck] = useState(false)
@@ -267,6 +270,23 @@ export function NodeDetail({ node, onClose, showSource, pool }: Props) {
           </Section>
 
           {hasCost(node.meta) && <CostSection meta={node.meta} />}
+
+          {unlocks.length > 0 && (
+            <Section title="流媒体解锁">
+              <div className="space-y-2">
+                {unlocks.map(item => (
+                  <div key={item.key} className="flex items-center gap-3 text-sm py-1.5">
+                    <span className="text-muted-foreground min-w-[120px]">{item.label}</span>
+                    <Badge variant="outline" className={streamUnlockToneClass(item.status, item.message)}>
+                      {item.status}
+                    </Badge>
+                    {item.region && <span className="font-mono">{item.region}</span>}
+                    {item.message && <span className="text-muted-foreground truncate">{item.message}</span>}
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
         </div>
       </div>
     </div>
@@ -403,20 +423,30 @@ function lastValue(data: ReturnType<typeof buildLatencyChart>['data'], name: str
 }
 
 function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: LatencyBlockProps) {
+  const lossKey = `nodeget-loss-lines-${type}`
   const [rangeIdx, setRangeIdx] = useState(1) // 默认 1 小时,各图独立
+  const [showLossLines, setShowLossLines] = useState(() => {
+    try {
+      return localStorage.getItem(lossKey) !== '0'
+    } catch {
+      return true
+    }
+  })
   const range = LATENCY_RANGES[rangeIdx]
   const { rows, loading } = useNodeLatency(pool, source, uuid, type, range.ms)
 
-  const { data, series } = useMemo(() => buildLatencyChart(rows, type), [rows, type])
+  const { data, displayData, series, lossPoints } = useMemo(() => buildLatencyChart(rows, type), [rows, type])
   const stats = useMemo(() => computeLatencyStats(rows, type), [rows, type])
   const [hidden, setHidden] = useState<Set<string>>(() => new Set())
+  const [hoveredSeries, setHoveredSeries] = useState<string | null>(null)
   const empty = data.length === 0
 
   const visibleSeries = series.filter(s => !hidden.has(s.name))
-  const single = visibleSeries.length === 1
+  const focusedSeries = hoveredSeries ? visibleSeries.filter(s => s.name === hoveredSeries) : visibleSeries
+  const single = focusedSeries.length === 1
   const yd = useMemo(
-    () => latencyYDomain(data, series.filter(s => !hidden.has(s.name)).map(s => s.name), type),
-    [data, series, hidden, type],
+    () => latencyYDomain(data, focusedSeries.map(s => s.name), type),
+    [data, focusedSeries, type],
   )
 
   const toggle = (name: string) =>
@@ -428,13 +458,23 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
     })
 
   // 头部概览:单来源取最新值,多来源取最优来源的平均
-  const primaryStat = stats.find(s => !hidden.has(s.name)) ?? stats[0]
+  const primaryStat = stats.find(s => focusedSeries.some(v => v.name === s.name)) ?? stats[0]
   const headline = single
-    ? lastValue(data, visibleSeries[0].name)
+    ? lastValue(data, focusedSeries[0].name)
     : (primaryStat?.avg ?? null)
   const q = latencyQuality(headline)
-  const avgForRef = single ? (stats.find(s => s.name === visibleSeries[0].name)?.avg ?? null) : null
+  const avgForRef = single ? (stats.find(s => s.name === focusedSeries[0].name)?.avg ?? null) : null
   const lastT = data.length ? data[data.length - 1].t : null
+  const chartHeadline = headline != null && (type === 'ping' || type === 'tcp_ping') ? Math.min(headline, 500) : headline
+  const chartAvgForRef = avgForRef != null && (type === 'ping' || type === 'tcp_ping') ? Math.min(avgForRef, 500) : avgForRef
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(lossKey, showLossLines ? '1' : '0')
+    } catch {
+      // ignore storage failure
+    }
+  }, [lossKey, showLossLines])
 
   // HTTP 等可选探测:后端无该类型数据时整块隐藏
   if (hideWhenEmpty && empty && !loading) return null
@@ -463,19 +503,33 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
             </span>
           )}
         </div>
-        <div className="flex items-center gap-0.5 rounded-lg bg-muted p-0.5">
-          {LATENCY_RANGES.map((r, i) => (
-            <button
-              key={r.short}
-              onClick={() => setRangeIdx(i)}
-              className={cn(
-                'px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors',
-                i === rangeIdx ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {r.short}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowLossLines(v => !v)}
+            className={cn(
+              'px-2 py-1 rounded-md text-[10px] font-medium border transition-colors',
+              showLossLines
+                ? 'border-rose-500/35 bg-rose-500/10 text-rose-300 hover:bg-rose-500/15'
+                : 'border-border bg-muted text-muted-foreground hover:text-foreground'
+            )}
+            title={showLossLines ? '隐藏丢包竖线' : '显示丢包竖线'}
+          >
+            丢包线
+          </button>
+          <div className="flex items-center gap-0.5 rounded-lg bg-muted p-0.5">
+            {LATENCY_RANGES.map((r, i) => (
+              <button
+                key={r.short}
+                onClick={() => setRangeIdx(i)}
+                className={cn(
+                  'px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors',
+                  i === rangeIdx ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {r.short}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -487,15 +541,18 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
         )}
         {!empty && (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+            <AreaChart data={displayData} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
               <defs>
-                {visibleSeries.map(s => (
-                  <linearGradient key={s.name} id={`lat-${slug(s.name)}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={s.color} stopOpacity={single ? 0.28 : 0.14} />
-                    <stop offset="60%" stopColor={s.color} stopOpacity={single ? 0.08 : 0.04} />
-                    <stop offset="100%" stopColor={s.color} stopOpacity={0} />
-                  </linearGradient>
-                ))}
+                {visibleSeries.map(s => {
+                  const isFocused = !hoveredSeries || s.name === hoveredSeries
+                  return (
+                    <linearGradient key={s.name} id={`lat-${slug(s.name)}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={s.color} stopOpacity={single && isFocused ? 0.28 : 0.14} />
+                      <stop offset="60%" stopColor={s.color} stopOpacity={single && isFocused ? 0.08 : 0.04} />
+                      <stop offset="100%" stopColor={s.color} stopOpacity={0} />
+                    </linearGradient>
+                  )
+                })}
               </defs>
               <CartesianGrid
                 strokeDasharray="2 6"
@@ -525,38 +582,58 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
                 domain={yd.domain}
                 allowDataOverflow
               />
-              <Tooltip content={<LatencyTooltip />} cursor={{ stroke: 'hsl(var(--primary))', strokeOpacity: 0.25, strokeWidth: 1 }} />
-              {avgForRef != null && (
+              <Tooltip content={<LatencyTooltip rawData={data} />} cursor={{ stroke: 'hsl(var(--primary))', strokeOpacity: 0.25, strokeWidth: 1 }} />
+              {chartAvgForRef != null && (
                 <ReferenceLine
-                  y={avgForRef}
+                  y={chartAvgForRef}
                   stroke={visibleSeries[0].color}
                   strokeDasharray="4 4"
                   strokeOpacity={0.45}
                   label={{ value: `均 ${avgForRef.toFixed(0)}ms`, fontSize: 10, fill: visibleSeries[0].color, position: 'right' }}
                 />
               )}
-              {visibleSeries.map(s => (
-                <Area
-                  key={s.name}
-                  type="monotoneX"
-                  dataKey={s.name}
-                  stroke={s.color}
-                  strokeWidth={single ? 2.4 : 1.8}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill={single ? `url(#lat-${slug(s.name)})` : 'none'}
-                  fillOpacity={single ? 1 : 0}
-                  connectNulls
-                  isAnimationActive={false}
-                  activeDot={{ r: 4, fill: s.color, stroke: 'hsl(var(--background))', strokeWidth: 2 }}
-                  dot={false}
-                />
-              ))}
+              {visibleSeries.map(s => {
+                const dimmed = !!hoveredSeries && s.name !== hoveredSeries
+                const focused = !hoveredSeries || s.name === hoveredSeries
+                return (
+                  <Area
+                    key={s.name}
+                    type="monotoneX"
+                    dataKey={s.name}
+                    stroke={s.color}
+                    strokeOpacity={dimmed ? 0.16 : 1}
+                    strokeWidth={single ? 2.4 : focused ? 2.8 : 1.4}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill={single && focused ? `url(#lat-${slug(s.name)})` : 'none'}
+                    fillOpacity={single && focused ? 1 : 0}
+                    connectNulls
+                    isAnimationActive={false}
+                    activeDot={{ r: 4, fill: s.color, stroke: 'hsl(var(--background))', strokeWidth: 2 }}
+                    dot={false}
+                  />
+                )
+              })}
+              {/* 丢包标记:顶部细红线，可手动开关 */}
+              {showLossLines && visibleSeries.map(s => {
+                const dimmed = !!hoveredSeries && s.name !== hoveredSeries
+                return data
+                  .filter(pt => pt[s.name] == null && lossPoints?.has(`${pt.t}-${s.name}`))
+                  .map(pt => (
+                    <ReferenceLine
+                      key={`loss-${s.name}-${pt.t}`}
+                      x={pt.t}
+                      stroke="#ef4444"
+                      strokeOpacity={dimmed ? 0.16 : 0.5}
+                      strokeWidth={dimmed ? 0.8 : 1.25}
+                    />
+                  ))
+              })}
               {/* 当前值高亮点(单来源)*/}
-              {single && lastT != null && headline != null && (
+              {single && lastT != null && chartHeadline != null && (
                 <ReferenceDot
                   x={lastT}
-                  y={headline}
+                  y={chartHeadline}
                   r={3.5}
                   fill={visibleSeries[0].color}
                   stroke="hsl(var(--background))"
@@ -579,13 +656,13 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
 
       {stats.length > 0 && (
         <div className="mt-3 border-t pt-3">
-          <div className="flex items-center px-2 pb-1 text-[11px] text-muted-foreground">
-            <span className="flex-1">来源</span>
-            <span className="hidden sm:block w-16 text-center">趋势</span>
-            <span className="w-16 text-center">质量</span>
-            <span className="w-20 text-right">平均</span>
-            <span className="w-14 text-right">抖动</span>
-            <span className="w-14 text-right">丢包</span>
+          <div className="grid items-center px-2 pb-1 text-[11px] text-muted-foreground grid-cols-[minmax(180px,1fr)_160px_64px_80px_56px_56px] sm:grid-cols-[minmax(240px,1fr)_220px_64px_80px_56px_56px] gap-3">
+            <span>来源</span>
+            <span className="hidden sm:block text-center">趋势</span>
+            <span className="text-center">质量</span>
+            <span className="text-right">平均</span>
+            <span className="text-right">抖动</span>
+            <span className="text-right">丢包</span>
           </div>
           <div className="space-y-0.5">
             {stats.map(s => (
@@ -594,7 +671,10 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
                 stat={s}
                 spark={data.map(d => (typeof d[s.name] === 'number' ? (d[s.name] as number) : null))}
                 hidden={hidden.has(s.name)}
+                hovered={hoveredSeries === s.name}
+                dimmed={!!hoveredSeries && hoveredSeries !== s.name}
                 onToggle={() => toggle(s.name)}
+                onHover={(hover) => setHoveredSeries(hover ? s.name : null)}
               />
             ))}
           </div>
@@ -604,13 +684,24 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
   )
 }
 
-function LatencyTooltip({ active, payload, label }: {
+function LatencyTooltip({ active, payload, label, rawData }: {
   active?: boolean
   payload?: Array<{ name: string; value: number; color: string }>
   label?: number
+  rawData: ChartPoint[]
 }) {
   if (!active || !payload?.length) return null
-  const rows = payload.filter(p => p.value != null).sort((a, b) => a.value - b.value)
+  const rawPoint = label != null ? rawData.find(p => p.t === label) : undefined
+  const rows = payload
+    .filter(p => p.value != null)
+    .map(p => {
+      const rawValue = rawPoint?.[p.name]
+      return {
+        ...p,
+        value: typeof rawValue === 'number' ? rawValue : p.value,
+      }
+    })
+    .sort((a, b) => a.value - b.value)
   return (
     <div className="rounded-lg border border-border/60 bg-popover/95 backdrop-blur px-3 py-2 shadow-xl text-xs">
       <div className="text-[10px] text-muted-foreground mb-1.5 font-mono">
@@ -636,12 +727,12 @@ function LatencyTooltip({ active, payload, label }: {
 
 function MiniSpark({ values, color }: { values: (number | null)[]; color: string }) {
   const pts = values.filter((v): v is number => v != null)
-  if (pts.length < 2) return <div className="h-4 w-14" />
+  if (pts.length < 2) return <div className="h-5 w-full min-w-[160px]" />
   const min = Math.min(...pts)
   const max = Math.max(...pts)
   const range = max - min || 1
-  const w = 56
-  const h = 16
+  const w = 220
+  const h = 18
   // 用原始序列(含 null)定位 x,缺失点跳过
   const n = values.length
   const coords: string[] = []
@@ -652,7 +743,7 @@ function MiniSpark({ values, color }: { values: (number | null)[]; color: string
     coords.push(`${x.toFixed(1)},${y.toFixed(1)}`)
   })
   return (
-    <svg width={w} height={h} className="overflow-visible">
+    <svg width="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" height={h} className="overflow-visible w-full min-w-[160px]">
       <polyline points={coords.join(' ')} fill="none" stroke={color} strokeWidth={1.25} strokeLinejoin="round" strokeLinecap="round" opacity={0.85} />
     </svg>
   )
@@ -662,12 +753,18 @@ function LatencyStatsRow({
   stat,
   spark,
   hidden,
+  hovered,
+  dimmed,
   onToggle,
+  onHover,
 }: {
   stat: LatencyStats
   spark: (number | null)[]
   hidden: boolean
+  hovered: boolean
+  dimmed: boolean
   onToggle: () => void
+  onHover: (hover: boolean) => void
 }) {
   const { name, color, avg, jitter, lossRate } = stat
   const q = latencyQuality(avg)
@@ -675,34 +772,38 @@ function LatencyStatsRow({
   return (
     <div
       onClick={onToggle}
+      onMouseEnter={() => onHover(true)}
+      onMouseLeave={() => onHover(false)}
       className={cn(
-        'flex items-center px-2 py-1.5 rounded-md text-xs cursor-pointer select-none transition-opacity hover:bg-muted/60',
+        'grid items-center px-2 py-1.5 rounded-md text-xs cursor-pointer select-none transition-all hover:bg-muted/60 grid-cols-[minmax(180px,1fr)_160px_64px_80px_56px_56px] sm:grid-cols-[minmax(240px,1fr)_220px_64px_80px_56px_56px] gap-3',
         hidden && 'opacity-35',
+        dimmed && 'opacity-35',
+        hovered && 'bg-muted/70 ring-1 ring-border',
       )}
     >
-      <span className="flex items-center gap-2 flex-1 min-w-0">
+      <span className="flex items-center gap-2 min-w-0">
         <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
         <span className="truncate">{name}</span>
       </span>
-      <span className="hidden sm:flex w-16 justify-center">
+      <span className="hidden sm:flex justify-center overflow-hidden">
         <MiniSpark values={spark} color={color} />
       </span>
-      <span className="w-16 text-center">
+      <span className="text-center">
         {q.tier >= 0 && (
           <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium" style={{ background: `${q.color}1f`, color: q.color }}>
             {q.label}
           </span>
         )}
       </span>
-      <span className="w-20 text-right tabular-nums font-mono" style={{ color: q.tier >= 0 ? q.color : undefined }}>
+      <span className="text-right tabular-nums font-mono" style={{ color: q.tier >= 0 ? q.color : undefined }}>
         {avg != null ? ms(avg) : '—'}
       </span>
-      <span className="w-14 text-right tabular-nums font-mono text-muted-foreground">
+      <span className="text-right tabular-nums font-mono text-muted-foreground">
         {jitter != null ? `${jitter.toFixed(0)}ms` : '—'}
       </span>
       <span
         className={cn(
-          'w-14 text-right tabular-nums font-mono',
+          'text-right tabular-nums font-mono',
           lossRate >= 5 ? 'text-rose-500 font-medium' : 'text-muted-foreground',
         )}
       >

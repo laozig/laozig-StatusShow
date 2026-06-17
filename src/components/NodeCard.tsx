@@ -11,6 +11,7 @@ import { hasCost, remainingDays } from '../utils/cost'
 import { normalizeCurrency, formatMoney } from '../utils/currency'
 import { usePins } from '../hooks/usePins'
 import { billingText, billingClass, type BillingView } from '../hooks/useTrafficBilling'
+import { streamUnlockCompactText, streamUnlockToneClass, type StreamUnlockView } from '../hooks/useStreamUnlocks'
 import type { Node } from '../types'
 import type { ReactNode } from 'react'
 
@@ -20,9 +21,10 @@ interface Props {
   showPrice?: boolean
   showExpire?: boolean
   billing?: BillingView
+  unlocks?: StreamUnlockView[]
 }
 
-export function NodeCard({ node, cardStyle = 'glass', showPrice = true, showExpire = true, billing }: Props) {
+export function NodeCard({ node, cardStyle = 'glass', showPrice = true, showExpire = true, billing, unlocks = [] }: Props) {
   const u = deriveUsage(node)
   const tags = Array.isArray(node.meta?.tags) ? node.meta.tags : []
   const os = osLabel(node)
@@ -203,6 +205,22 @@ export function NodeCard({ node, cardStyle = 'glass', showPrice = true, showExpi
                 }
               </span>
             )}
+          </div>
+        )}
+
+        {/* Stream unlock */}
+        {unlocks.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {unlocks.slice(0, 3).map(item => (
+              <Badge
+                key={item.key}
+                variant="outline"
+                className={cn('text-[10px] px-1.5 py-0', streamUnlockToneClass(item.status, item.message))}
+                title={item.message || item.label}
+              >
+                {streamUnlockCompactText(item)}
+              </Badge>
+            ))}
           </div>
         )}
 

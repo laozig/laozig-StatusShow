@@ -4,6 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from './components/ui/alert'
 import { useConfig } from './hooks/useConfig'
 import { useNodes } from './hooks/useNodes'
 import { useTrafficBilling } from './hooks/useTrafficBilling'
+import { useStreamUnlocks } from './hooks/useStreamUnlocks'
 import { Background } from './components/Background'
 import { Navbar } from './components/Navbar'
 import { Footer } from './components/Footer'
@@ -72,6 +73,7 @@ function AppInner() {
   const { config, error: configError } = useConfig()
   const { nodes, errors, loading, pool } = useNodes(config)
   const billing = useTrafficBilling(config)
+  const streamUnlocks = useStreamUnlocks(config)
 
   const [view, setView] = useState<View>(initialView)
   const [sort, setSort] = useState<Sort>(initialSort)
@@ -361,6 +363,7 @@ function AppInner() {
                   showPrice={showPrice}
                   showExpire={showExpire}
                   billing={billing.get(n.uuid)}
+                  unlocks={streamUnlocks.get(n.uuid) ?? []}
                 />
               </div>
             ))}
@@ -408,6 +411,7 @@ function AppInner() {
             onClose={() => setSelected(null)}
             showSource={(config.site_tokens?.length ?? 0) > 1}
             pool={pool}
+            unlocks={streamUnlocks.get(selectedNode.uuid) ?? []}
           />
         </Suspense>
       )}

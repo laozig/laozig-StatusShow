@@ -37,42 +37,55 @@ export interface ChartPoint {
   [series: string]: number | null
 }
 
+export interface DisplayChartPoint {
+  t: number
+  [series: string]: number | null
+}
+
 export interface ChartSeries {
   name: string
   color: string
 }
 
-function forwardFill(data: ChartPoint[], names: string[]) {
-  const last: Record<string, number | null> = {}
-  for (const n of names) last[n] = null
-  for (const pt of data) {
-    for (const n of names) {
-      const v = pt[n]
-      if (v == null) pt[n] = last[n]
-      else last[n] = v
-    }
-  }
-}
-
+/** 构建延迟图表数据 + 丢包标记集合 */
 export function buildLatencyChart(rows: TaskQueryResult[], type: LatencyType) {
   const names = seriesNames(rows)
   const series: ChartSeries[] = names.map(name => ({ name, color: latencyColor(name) }))
   const byTs = new Map<number, ChartPoint>()
+  const lossPoints = new Set<string>() // "t-sourceName" 格式
 
   for (const r of rows) {
     const t = normalizeTs(r.timestamp)
+    const name = r.cron_source || '未知'
     let pt = byTs.get(t)
     if (!pt) {
       pt = { t }
-      for (const n of names) pt[n] = null
       byTs.set(t, pt)
     }
-    pt[r.cron_source || '未知'] = pickValue(r, type)
+    const val = pickValue(r, type)
+    pt[name] = val
+    // 只有 row 存在且 success=false 才是真实丢包
+    if (val === null) lossPoints.add(`${t}-${name}`)
   }
 
   const data = [...byTs.values()].sort((a, b) => a.t - b.t)
-  forwardFill(data, names)
-  return { data, series }
+
+  // 图上显示值: ping / tcp_ping 超过 500ms 时封顶到 500，连在顶边
+  const displayData: DisplayChartPoint[] = data.map(pt => {
+    const next: DisplayChartPoint = { t: pt.t }
+    for (const name of names) {
+      const v = pt[name]
+      if (typeof v !== 'number') {
+        next[name] = v
+        continue
+      }
+      if ((type === 'ping' || type === 'tcp_ping') && v > 500) next[name] = 500
+      else next[name] = v
+    }
+    return next
+  })
+
+  return { data, displayData, series, lossPoints }
 }
 
 export interface LatencyStats {
@@ -117,9 +130,9 @@ export function computeLatencyStats(rows: TaskQueryResult[], type: LatencyType):
 }
 
 const TYPE_Y_CAP: Record<LatencyType, number> = {
-  ping: 500,
-  tcp_ping: 500,
-  http_ping: 2000,
+  ping: 2000,
+  tcp_ping: 2000,
+  http_ping: 5000,
 }
 
 export interface LatencyDomain {
@@ -130,12 +143,11 @@ export interface LatencyDomain {
 }
 
 /**
- * 固定 Y 轴上限(按类型):ping / tcp_ping = 500ms,http_ping = 2000ms。
- * 避免随数据动态缩放导致基线忽高忽低;超过上限的超时/离群点直接裁顶,
- * 并返回越界次数用于提示。
+ * 自适应 Y 轴上限:取数据 p95 值的 1.6 倍(向上取整到 50ms),不低于 50ms。
+ * 超过硬上限的超时/离群点裁顶,并返回越界次数用于提示。
  */
-export function latencyYDomain(data: ChartPoint[], names: string[], type: LatencyType): LatencyDomain {
-  const cap = TYPE_Y_CAP[type] ?? 500
+export function latencyYDomain(data: ChartPoint[] | DisplayChartPoint[], names: string[], type: LatencyType): LatencyDomain {
+  const cap = TYPE_Y_CAP[type] ?? 2000
   const vals: number[] = []
   for (const pt of data) {
     for (const n of names) {
@@ -143,14 +155,27 @@ export function latencyYDomain(data: ChartPoint[], names: string[], type: Latenc
       if (typeof v === 'number') vals.push(v)
     }
   }
-  const max = vals.length ? Math.max(...vals) : null
-  const outliers = vals.filter(v => v > cap).length
-  return { domain: [0, cap], cap, outliers, max }
+  if (!vals.length) return { domain: [0, cap], cap, outliers: 0, max: null }
+
+  const max = Math.max(...vals)
+
+  // TCP Ping / Ping 固定 500，高度不再动态缩放
+  if (type === 'ping' || type === 'tcp_ping') {
+    const outliers = vals.filter(v => v > cap).length
+    return { domain: [0, 500], cap: 500, outliers, max }
+  }
+
+  // HTTP Ping 保持自适应
+  const sorted = [...vals].sort((a, b) => a - b)
+  const p95 = sorted[Math.floor(sorted.length * 0.95)]
+  const adaptive = Math.max(50, Math.min(cap, Math.ceil(p95 * 1.6 / 50) * 50))
+  const outliers = vals.filter(v => v > adaptive).length
+  return { domain: [0, adaptive], cap: adaptive, outliers, max }
 }
 
 export interface LatencyQuality {
   label: string
-  tier: number // -1 未知, 0 最好 ... 4 最差
+  tier: number
   color: string
   className: string
 }

@@ -65,7 +65,7 @@
         "name": "预设主题",
         "type": "select",
         "options": "nebula,modern,tech,future,pixel,realistic,antique,medieval,wartorn",
-        "default": "medieval",
+        "default": "antique",
         "help": "整体气质预设：nebula=星云, modern=简洁现代, tech=科技, future=未来, pixel=像素, realistic=写实, antique=古朴, medieval=中世纪, wartorn=战损（访客可在页内主题面板中切换）"
       },
       {
