@@ -4,6 +4,7 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -24,6 +25,7 @@ import {
   buildLatencyChart,
   computeLatencyStats,
   latencyQuality,
+  latencyYDomain,
   type LatencyStats,
 } from '../utils/latency'
 import { useNodeLatency } from '../hooks/useNodeLatency'
@@ -55,8 +57,6 @@ export function NodeDetail({ node, onClose, showSource, pool }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const [stuck, setStuck] = useState(false)
-  const [rangeIdx, setRangeIdx] = useState(1) // 默认 1 小时
-  const range = LATENCY_RANGES[rangeIdx]
 
   useEffect(() => {
     if (!node) return
@@ -83,13 +83,6 @@ export function NodeDetail({ node, onClose, showSource, pool }: Props) {
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
   }, [node])
-
-  const { pingData, tcpData, loading: latencyLoading } = useNodeLatency(
-    pool,
-    node?.source ?? null,
-    node?.uuid ?? null,
-    range.ms,
-  )
 
   if (!node) return null
 
@@ -214,21 +207,25 @@ export function NodeDetail({ node, onClose, showSource, pool }: Props) {
 
         <LatencyBlock
           title="TCP Ping"
-          rows={tcpData}
           type="tcp_ping"
-          loading={latencyLoading}
-          rangeLabel={range.label}
-          rangeIdx={rangeIdx}
-          onRangeIdx={setRangeIdx}
+          pool={pool}
+          source={node.source ?? null}
+          uuid={node.uuid}
         />
         <LatencyBlock
           title="Ping"
-          rows={pingData}
           type="ping"
-          loading={latencyLoading}
-          rangeLabel={range.label}
-          rangeIdx={rangeIdx}
-          onRangeIdx={setRangeIdx}
+          pool={pool}
+          source={node.source ?? null}
+          uuid={node.uuid}
+        />
+        <LatencyBlock
+          title="HTTP Ping"
+          type="http_ping"
+          pool={pool}
+          source={node.source ?? null}
+          uuid={node.uuid}
+          hideWhenEmpty
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -387,12 +384,11 @@ function Spark({ data, dataKey, label, stroke, domain, format }: SparkProps) {
 
 interface LatencyBlockProps {
   title: string
-  rows: TaskQueryResult[]
   type: LatencyType
-  loading: boolean
-  rangeLabel: string
-  rangeIdx: number
-  onRangeIdx: (i: number) => void
+  pool: BackendPool | null
+  source: string | null
+  uuid: string
+  hideWhenEmpty?: boolean
 }
 
 const ms = (v: number) => `${v.toFixed(1)} ms`
@@ -406,7 +402,11 @@ function lastValue(data: ReturnType<typeof buildLatencyChart>['data'], name: str
   return null
 }
 
-function LatencyBlock({ title, rows, type, loading, rangeLabel, rangeIdx, onRangeIdx }: LatencyBlockProps) {
+function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: LatencyBlockProps) {
+  const [rangeIdx, setRangeIdx] = useState(1) // 默认 1 小时,各图独立
+  const range = LATENCY_RANGES[rangeIdx]
+  const { rows, loading } = useNodeLatency(pool, source, uuid, type, range.ms)
+
   const { data, series } = useMemo(() => buildLatencyChart(rows, type), [rows, type])
   const stats = useMemo(() => computeLatencyStats(rows, type), [rows, type])
   const [hidden, setHidden] = useState<Set<string>>(() => new Set())
@@ -414,6 +414,10 @@ function LatencyBlock({ title, rows, type, loading, rangeLabel, rangeIdx, onRang
 
   const visibleSeries = series.filter(s => !hidden.has(s.name))
   const single = visibleSeries.length === 1
+  const yd = useMemo(
+    () => latencyYDomain(data, series.filter(s => !hidden.has(s.name)).map(s => s.name), type),
+    [data, series, hidden, type],
+  )
 
   const toggle = (name: string) =>
     setHidden(prev => {
@@ -430,9 +434,13 @@ function LatencyBlock({ title, rows, type, loading, rangeLabel, rangeIdx, onRang
     : (primaryStat?.avg ?? null)
   const q = latencyQuality(headline)
   const avgForRef = single ? (stats.find(s => s.name === visibleSeries[0].name)?.avg ?? null) : null
+  const lastT = data.length ? data[data.length - 1].t : null
+
+  // HTTP 等可选探测:后端无该类型数据时整块隐藏
+  if (hideWhenEmpty && empty && !loading) return null
 
   return (
-    <Section title={`${title} · 近 ${rangeLabel}`}>
+    <Section title={`${title} · 近 ${range.label}`}>
       {/* 概览:当前/代表延迟 + 质量分级 + 时间范围 */}
       <div className="flex items-center justify-between flex-wrap gap-2 -mt-1 mb-3">
         <div className="flex items-baseline gap-2">
@@ -459,7 +467,7 @@ function LatencyBlock({ title, rows, type, loading, rangeLabel, rangeIdx, onRang
           {LATENCY_RANGES.map((r, i) => (
             <button
               key={r.short}
-              onClick={() => onRangeIdx(i)}
+              onClick={() => setRangeIdx(i)}
               className={cn(
                 'px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors',
                 i === rangeIdx ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
@@ -479,19 +487,20 @@ function LatencyBlock({ title, rows, type, loading, rangeLabel, rangeIdx, onRang
         )}
         {!empty && (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
               <defs>
                 {visibleSeries.map(s => (
                   <linearGradient key={s.name} id={`lat-${slug(s.name)}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={s.color} stopOpacity={single ? 0.32 : 0.16} />
+                    <stop offset="0%" stopColor={s.color} stopOpacity={single ? 0.28 : 0.14} />
+                    <stop offset="60%" stopColor={s.color} stopOpacity={single ? 0.08 : 0.04} />
                     <stop offset="100%" stopColor={s.color} stopOpacity={0} />
                   </linearGradient>
                 ))}
               </defs>
               <CartesianGrid
-                strokeDasharray="3 3"
+                strokeDasharray="2 6"
                 stroke="hsl(var(--muted-foreground))"
-                strokeOpacity={0.12}
+                strokeOpacity={0.1}
                 vertical={false}
               />
               <XAxis
@@ -499,34 +508,42 @@ function LatencyBlock({ title, rows, type, loading, rangeLabel, rangeIdx, onRang
                 type="number"
                 domain={['dataMin', 'dataMax']}
                 scale="time"
-                tickFormatter={t => new Date(t).toLocaleTimeString()}
-                tick={{ fontSize: 11 }}
-                stroke="hsl(var(--muted-foreground))"
+                tickFormatter={t => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                tickLine={false}
+                axisLine={false}
+                minTickGap={56}
+                tickMargin={8}
               />
               <YAxis
-                tickFormatter={v => `${v}ms`}
-                tick={{ fontSize: 11 }}
-                stroke="hsl(var(--muted-foreground))"
-                width={48}
-                domain={['auto', 'auto']}
+                tickFormatter={v => `${v}`}
+                tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                tickLine={false}
+                axisLine={false}
+                width={40}
+                tickCount={5}
+                domain={yd.domain}
+                allowDataOverflow
               />
-              <Tooltip content={<LatencyTooltip />} cursor={{ stroke: 'hsl(var(--primary))', strokeOpacity: 0.3, strokeWidth: 1 }} />
+              <Tooltip content={<LatencyTooltip />} cursor={{ stroke: 'hsl(var(--primary))', strokeOpacity: 0.25, strokeWidth: 1 }} />
               {avgForRef != null && (
                 <ReferenceLine
                   y={avgForRef}
                   stroke={visibleSeries[0].color}
                   strokeDasharray="4 4"
-                  strokeOpacity={0.5}
+                  strokeOpacity={0.45}
                   label={{ value: `均 ${avgForRef.toFixed(0)}ms`, fontSize: 10, fill: visibleSeries[0].color, position: 'right' }}
                 />
               )}
               {visibleSeries.map(s => (
                 <Area
                   key={s.name}
-                  type="monotone"
+                  type="monotoneX"
                   dataKey={s.name}
                   stroke={s.color}
-                  strokeWidth={single ? 2.2 : 1.6}
+                  strokeWidth={single ? 2.4 : 1.8}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   fill={single ? `url(#lat-${slug(s.name)})` : 'none'}
                   fillOpacity={single ? 1 : 0}
                   connectNulls
@@ -535,8 +552,25 @@ function LatencyBlock({ title, rows, type, loading, rangeLabel, rangeIdx, onRang
                   dot={false}
                 />
               ))}
+              {/* 当前值高亮点(单来源)*/}
+              {single && lastT != null && headline != null && (
+                <ReferenceDot
+                  x={lastT}
+                  y={headline}
+                  r={3.5}
+                  fill={visibleSeries[0].color}
+                  stroke="hsl(var(--background))"
+                  strokeWidth={2}
+                  isFront
+                />
+              )}
             </AreaChart>
           </ResponsiveContainer>
+        )}
+        {!empty && yd.outliers > 0 && (
+          <div className="pointer-events-none absolute left-11 top-0.5 rounded bg-rose-500/12 px-1.5 py-0.5 text-[10px] font-mono text-rose-400/90">
+            {yd.outliers} 次超时/离群 &gt; {yd.cap}ms · 峰值 {yd.max?.toFixed(0)}ms
+          </div>
         )}
         {!empty && loading && (
           <div className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />

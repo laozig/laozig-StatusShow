@@ -265,14 +265,14 @@ function AppInner() {
   const hasErrors = errors.length > 0
 
   return (
-    <div className={`min-h-screen flex flex-col ${getDensityClass(density)}`}>
+    <div className={`min-h-screen flex flex-col ${getDensityClass(density)}`} data-view={view}>
       <Background showParticles={showParticles} />
       <NodeStatusWatcher nodes={nodes} />
       {hasVisibleNodes && <SideRail nodes={nodes} />}
 
       {announcement && <Announcement text={announcement} />}
 
-      {hasVisibleNodes && <LiveTicker nodes={nodes} />}
+      {hasVisibleNodes && appearance.ticker && <LiveTicker nodes={nodes} />}
 
       <Navbar
       siteName={config.user_preferences.site_name || 'laozig 探针'}

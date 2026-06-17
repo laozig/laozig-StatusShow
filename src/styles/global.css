@@ -1328,17 +1328,22 @@ html[data-theme="wartorn"] { --primary: 18 54% 47%; --accent: 18 54% 47%; --ring
 .dark[data-theme="antique"] .antique-rubbing-text {
   color: rgba(150, 214, 192, 0.28);
 }
-/* 大屏:主内容整体左移,右侧让出诗句专属带 */
+/* 大屏:卡片视图主内容右移,让出诗句专属带(表格/地图视图铺满,不留白)*/
 @media (min-width: 1200px) {
-  [data-theme="antique"] main {
+  [data-theme="antique"] [data-view="cards"] main {
     padding-right: min(20vw, 340px) !important;
   }
 }
-/* 超宽屏:左侧统计栏就位,主内容留出左边距 */
+/* 超宽屏:左侧统计栏就位,主内容留出左边距(各视图一致,避免遮挡)*/
 @media (min-width: 1750px) {
   [data-theme="antique"] main {
     padding-left: 68px !important;
   }
+}
+/* 表格/地图视图隐藏右侧法帖,内容完整铺开 */
+[data-theme="antique"] [data-view="table"] .antique-rubbing,
+[data-theme="antique"] [data-view="map"] .antique-rubbing {
+  display: none !important;
 }
 /* 真迹原图层:存为 public/shangyangtie.png 即自动显示(居中,墨色融入背景)*/
 [data-theme="antique"] .antique-tie {

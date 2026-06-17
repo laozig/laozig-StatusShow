@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react'
-import { Palette, Sun, Moon, Monitor, RotateCcw, Check, X, Sparkles, CreditCard } from 'lucide-react'
+import { Palette, Sun, Moon, Monitor, RotateCcw, Check, X, Sparkles, CreditCard, Megaphone } from 'lucide-react'
 import {
-  useAppearance, setMode, setAccent, setCard, setPreset, resetAppearance,
+  useAppearance, setMode, setAccent, setCard, setPreset, setTicker, resetAppearance,
   ACCENTS, PRESETS, CARD_STYLES, type ThemeMode,
 } from '../hooks/useAppearance'
 import { cn } from '../utils/cn'
@@ -138,6 +138,14 @@ export function ThemePanel({ open, onClose }: Props) {
                   sub={c.desc}
                 />
               ))}
+            </div>
+          </Group>
+
+          {/* 顶部广播 */}
+          <Group title="顶部广播" icon={Megaphone}>
+            <div className="grid grid-cols-2 gap-2">
+              <SegButton active={a.ticker} onClick={() => setTicker(true)} label="开启" sub="顶部滚动实时概览" />
+              <SegButton active={!a.ticker} onClick={() => setTicker(false)} label="关闭" sub="隐藏顶部滚动条" />
             </div>
           </Group>
         </div>

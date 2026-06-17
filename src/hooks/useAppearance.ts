@@ -19,6 +19,7 @@ export interface Appearance {
   accent: string
   card: string
   preset: string
+  ticker: boolean
 }
 
 export interface AccentDef { code: string; name: string; hex: string }
@@ -55,7 +56,7 @@ export const PRESETS: PresetDef[] = [
   { code: 'future', name: '未来', accent: 'violet', desc: 'Orbitron · 霓虹辉光', swatch: ['#8b5cf6', '#d946ef'] },
   { code: 'pixel', name: '像素', accent: 'green', desc: '点阵字 · 硬投影 · 扫描线', swatch: ['#84cc16', '#22c55e'] },
   { code: 'realistic', name: '写实', accent: 'slate', desc: '中性实色 · 分层柔影', swatch: ['#64748b', '#475569'] },
-  { code: 'antique', name: '古朴', accent: 'amber', desc: '中文衬线 · 羊皮纸暖褐', swatch: ['#b4783c', '#a06e32'] },
+  { code: 'antique', name: '古朴', accent: 'teal', desc: '草书 · 青绿山水', swatch: ['#3f9c80', '#1e3a32'] },
   { code: 'medieval', name: '中世纪', accent: 'amber', desc: 'Cinzel 刻铭 · 暗石烫金', swatch: ['#c9a227', '#7a2828'] },
   { code: 'wartorn', name: '战损', accent: 'amber', desc: '打字机 · 做旧裂边', swatch: ['#8a6a32', '#5a4a3a'] },
 ]
@@ -71,9 +72,10 @@ const LS = {
   accent: 'nodeget.accent',
   card: 'nodeget.card',
   preset: 'nodeget.preset',
+  ticker: 'nodeget.ticker',
 }
 
-const BAKED: Appearance = { mode: 'dark', accent: 'violet', card: 'glass', preset: 'future' }
+const BAKED: Appearance = { mode: 'dark', accent: 'violet', card: 'glass', preset: 'future', ticker: true }
 
 let configDefaults: Partial<Appearance> = {}
 let overrides: Partial<Appearance> = readOverrides()
@@ -89,6 +91,8 @@ function readOverrides(): Partial<Appearance> {
   if (c) o.card = c
   const p = localStorage.getItem(LS.preset)
   if (p) o.preset = p
+  const tk = localStorage.getItem(LS.ticker)
+  if (tk === 'true' || tk === 'false') o.ticker = tk === 'true'
   return o
 }
 
@@ -98,6 +102,7 @@ function compute(): Appearance {
     accent: overrides.accent ?? configDefaults.accent ?? BAKED.accent,
     card: overrides.card ?? configDefaults.card ?? BAKED.card,
     preset: overrides.preset ?? configDefaults.preset ?? BAKED.preset,
+    ticker: overrides.ticker ?? configDefaults.ticker ?? BAKED.ticker,
   }
 }
 
@@ -166,6 +171,12 @@ export function setAccent(accent: string) {
 export function setCard(card: string) {
   overrides.card = card
   try { localStorage.setItem(LS.card, card) } catch { /* ignore */ }
+  update()
+}
+
+export function setTicker(on: boolean) {
+  overrides.ticker = on
+  try { localStorage.setItem(LS.ticker, String(on)) } catch { /* ignore */ }
   update()
 }
 

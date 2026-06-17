@@ -167,7 +167,7 @@ export type Sort =
   | 'uptime'
   | 'price'
 
-export type LatencyType = 'ping' | 'tcp_ping'
+export type LatencyType = 'ping' | 'tcp_ping' | 'http_ping'
 
 export interface Usage {
   cpu?: number

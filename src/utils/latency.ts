@@ -116,6 +116,38 @@ export function computeLatencyStats(rows: TaskQueryResult[], type: LatencyType):
   })
 }
 
+const TYPE_Y_CAP: Record<LatencyType, number> = {
+  ping: 500,
+  tcp_ping: 500,
+  http_ping: 2000,
+}
+
+export interface LatencyDomain {
+  domain: [number, number]
+  cap: number
+  outliers: number
+  max: number | null
+}
+
+/**
+ * 固定 Y 轴上限(按类型):ping / tcp_ping = 500ms,http_ping = 2000ms。
+ * 避免随数据动态缩放导致基线忽高忽低;超过上限的超时/离群点直接裁顶,
+ * 并返回越界次数用于提示。
+ */
+export function latencyYDomain(data: ChartPoint[], names: string[], type: LatencyType): LatencyDomain {
+  const cap = TYPE_Y_CAP[type] ?? 500
+  const vals: number[] = []
+  for (const pt of data) {
+    for (const n of names) {
+      const v = pt[n]
+      if (typeof v === 'number') vals.push(v)
+    }
+  }
+  const max = vals.length ? Math.max(...vals) : null
+  const outliers = vals.filter(v => v > cap).length
+  return { domain: [0, cap], cap, outliers, max }
+}
+
 export interface LatencyQuality {
   label: string
   tier: number // -1 未知, 0 最好 ... 4 最差

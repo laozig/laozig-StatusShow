@@ -28,7 +28,7 @@ export function NodeTable({ nodes, onOpen, billing }: Props) {
             <TableRow className="hover:bg-transparent border-border/50">
               <TableHead className="w-[72px] text-[11px] uppercase tracking-wider">状态</TableHead>
               <TableHead className="text-[11px] uppercase tracking-wider">名称</TableHead>
-              <TableHead className="w-12 text-center text-[11px] uppercase tracking-wider">地区</TableHead>
+              <TableHead className="w-14 text-center text-[11px] uppercase tracking-wider whitespace-nowrap">地区</TableHead>
               <TableHead className="hidden lg:table-cell text-[11px] uppercase tracking-wider">系统</TableHead>
               <TableHead className="hidden xl:table-cell text-[11px] uppercase tracking-wider">架构</TableHead>
               <TableHead className="text-[11px] uppercase tracking-wider">CPU</TableHead>
