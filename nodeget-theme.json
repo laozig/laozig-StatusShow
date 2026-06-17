@@ -12,7 +12,7 @@
         "key": "site_name",
         "name": "站点标题",
         "type": "string",
-        "default": "laozig 探针",
+        "default": "laozig",
         "help": "输入站点标题"
       },
       {
@@ -65,7 +65,7 @@
         "name": "预设主题",
         "type": "select",
         "options": "nebula,modern,tech,future,pixel,realistic,antique,medieval,wartorn",
-        "default": "future",
+        "default": "medieval",
         "help": "整体气质预设：nebula=星云, modern=简洁现代, tech=科技, future=未来, pixel=像素, realistic=写实, antique=古朴, medieval=中世纪, wartorn=战损（访客可在页内主题面板中切换）"
       },
       {
@@ -73,7 +73,7 @@
         "name": "主题色",
         "type": "select",
         "options": "cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,red,orange,amber,lime,green,emerald,teal,slate",
-        "default": "violet",
+        "default": "cyan",
         "help": "选择主题强调色（共 17 种，访客也可在页内主题面板中自行切换）"
       },
       {
@@ -95,7 +95,7 @@
         "key": "announcement",
         "name": "公告栏",
         "type": "string",
-        "default": "",
+        "default": "laozig · 服务器状态监控面板",
         "help": "顶部公告文本，留空则不显示"
       }
     ]

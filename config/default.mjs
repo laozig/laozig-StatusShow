@@ -9,7 +9,7 @@ import pkg from '../package.json' with { type: 'json' }
 
 export const defaultSiteTokens = [
     {
-        "name": "master server node 1",
+        "name": "laozig",
         "backend_url": "wss://your-backend.example.com",
         "token": "YOUR_TOKEN_HERE"
     }
