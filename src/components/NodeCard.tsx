@@ -13,7 +13,7 @@ import { usePins } from '../hooks/usePins'
 import { billingText, billingClass, type BillingView } from '../hooks/useTrafficBilling'
 import { streamUnlockCompactText, streamUnlockToneClass, type StreamUnlockView } from '../hooks/useStreamUnlocks'
 import type { Node } from '../types'
-import type { ReactNode } from 'react'
+import { memo, type ReactNode } from 'react'
 
 interface Props {
   node: Node
@@ -24,7 +24,7 @@ interface Props {
   unlocks?: StreamUnlockView[]
 }
 
-export function NodeCard({ node, cardStyle = 'glass', showPrice = true, showExpire = true, billing, unlocks = [] }: Props) {
+function NodeCardInner({ node, cardStyle = 'glass', showPrice = true, showExpire = true, billing, unlocks = [] }: Props) {
   const u = deriveUsage(node)
   const tags = Array.isArray(node.meta?.tags) ? node.meta.tags : []
   const os = osLabel(node)
@@ -211,7 +211,7 @@ export function NodeCard({ node, cardStyle = 'glass', showPrice = true, showExpi
         {/* Stream unlock */}
         {unlocks.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {unlocks.slice(0, 3).map(item => (
+            {unlocks.slice(0, 4).map(item => (
               <Badge
                 key={item.key}
                 variant="outline"
@@ -238,6 +238,28 @@ export function NodeCard({ node, cardStyle = 'glass', showPrice = true, showExpi
     </a>
   )
 }
+
+// 轮询每 2s/5s 会重建整个 nodes Map（每个 Node 都是新对象），默认浅比较必失效。
+// 这里按“数据是否真的变了”来比：dynamic.timestamp 不变 + online 不变 + 元数据/解锁/账单引用不变 → 跳过重渲染。
+// 不比较 node.history：它每轮 slice 都产生新引用，但只要 timestamp 没变内容就没变。
+function nodeCardPropsEqual(a: Props, b: Props) {
+  const x = a.node
+  const y = b.node
+  return (
+    x.uuid === y.uuid &&
+    x.online === y.online &&
+    x.dynamic?.timestamp === y.dynamic?.timestamp &&
+    x.meta === y.meta &&
+    x.static === y.static &&
+    a.unlocks === b.unlocks &&
+    a.billing === b.billing &&
+    a.cardStyle === b.cardStyle &&
+    a.showPrice === b.showPrice &&
+    a.showExpire === b.showExpire
+  )
+}
+
+export const NodeCard = memo(NodeCardInner, nodeCardPropsEqual)
 
 function extractGpu(gpu: unknown): string | null {
   if (!Array.isArray(gpu) || gpu.length === 0) return null

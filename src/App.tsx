@@ -4,7 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from './components/ui/alert'
 import { useConfig } from './hooks/useConfig'
 import { useNodes } from './hooks/useNodes'
 import { useTrafficBilling } from './hooks/useTrafficBilling'
-import { useStreamUnlocks } from './hooks/useStreamUnlocks'
+import { useStreamUnlocks, type StreamUnlockView } from './hooks/useStreamUnlocks'
 import { Background } from './components/Background'
 import { Navbar } from './components/Navbar'
 import { Footer } from './components/Footer'
@@ -46,6 +46,8 @@ import type { Sort, View } from './types'
 const DEFAULT_LOGO = `${import.meta.env.BASE_URL}logo.png`
 const VIEW_KEY = 'nodeget.view'
 const SORT_KEY = 'nodeget.sort'
+// 共享空数组：避免每次渲染对无解锁数据的节点新建 []，从而破坏 NodeCard 的 memo
+const NO_UNLOCKS: StreamUnlockView[] = []
 
 function initialView(): View {
   const v = localStorage.getItem(VIEW_KEY)
@@ -363,7 +365,7 @@ function AppInner() {
                   showPrice={showPrice}
                   showExpire={showExpire}
                   billing={billing.get(n.uuid)}
-                  unlocks={streamUnlocks.get(n.uuid) ?? []}
+                  unlocks={streamUnlocks.get(n.uuid) ?? NO_UNLOCKS}
                 />
               </div>
             ))}
@@ -411,7 +413,7 @@ function AppInner() {
             onClose={() => setSelected(null)}
             showSource={(config.site_tokens?.length ?? 0) > 1}
             pool={pool}
-            unlocks={streamUnlocks.get(selectedNode.uuid) ?? []}
+            unlocks={streamUnlocks.get(selectedNode.uuid) ?? NO_UNLOCKS}
           />
         </Suspense>
       )}

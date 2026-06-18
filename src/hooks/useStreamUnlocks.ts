@@ -97,10 +97,23 @@ export function streamUnlockToneClass(status: string, message?: string | null) {
 }
 
 export function streamUnlockCompactText(item: StreamUnlockView) {
-  const region = item.region ? ` ${item.region}` : ''
-  if (item.message && /original/i.test(item.message)) return `${streamUnlockShortLabel(item.key)} 原创${region}`
-  if (item.message && /premium/i.test(item.message)) return `${streamUnlockShortLabel(item.key)} Premium${region}`
+  const region =
+    item.region && item.region.toLowerCase() !== 'n/a'
+      ? ` ${item.region.toUpperCase()}`
+      : ''
   return `${streamUnlockShortLabel(item.key)}${region}`
+}
+
+// v6 探测“活着”的状态：解锁 / 部分 / 命中地区页（如 cn）——这些都说明机器能用 IPv6 访问外网。
+const V6_ALIVE_STATUSES = new Set(['success', 'partial', 'blocked'])
+
+// 单栈机器没有 IPv6 出口，v6 探测必然全部失败（fail/pending）。
+// 这种情况下丢弃 v6 项，卡片只显示 v4；双栈机器（至少一个 v6 项是真实状态）保持原样。
+function filterDeadIpv6(views: StreamUnlockView[]): StreamUnlockView[] {
+  const v6 = views.filter(v => v.key.endsWith('_ipv6'))
+  if (!v6.length) return views
+  const hasV6 = v6.some(v => V6_ALIVE_STATUSES.has(v.status))
+  return hasV6 ? views : views.filter(v => !v.key.endsWith('_ipv6'))
 }
 
 type WorkerResultItem = {
@@ -449,6 +462,7 @@ export function useStreamUnlocks(config: SiteConfig | null): Map<string, StreamU
         // task_query fallback 失败时保留已有 route 数据
       }
 
+      for (const [uuid, views] of next) next.set(uuid, filterDeadIpv6(views))
       if (!stopped && next.size) setMap(next)
     }
 
