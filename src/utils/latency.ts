@@ -1,20 +1,18 @@
 import type { LatencyType, TaskQueryResult } from '../types'
 
-const COLORS = [
-  '#3b82f6',
-  '#10b981',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#06b6d4',
-  '#ec4899',
-  '#14b8a6',
+// 深色背景友好的定性调色板:明度统一、相邻索引对比大;按来源排序索引分配,保证单图内不撞色
+const PALETTE = [
+  '#60a5fa', '#f472b6', '#34d399', '#fbbf24',
+  '#a78bfa', '#22d3ee', '#fb923c', '#4ade80',
+  '#e879f9', '#38bdf8', '#facc15', '#2dd4bf',
+  '#fca5a5', '#c4b5fd', '#a3e635', '#f9a8d4',
 ]
 
-export function latencyColor(name: string) {
-  let h = 0
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0
-  return COLORS[h % COLORS.length]
+export function seriesColor(index: number) {
+  if (index < PALETTE.length) return PALETTE[index]
+  // 超出手工色板后用 golden-angle 生成,保证更多来源也均匀不撞色
+  const hue = (index * 137.508) % 360
+  return `hsl(${hue.toFixed(1)}deg 68% 62%)`
 }
 
 function normalizeTs(ts: number) {
@@ -50,7 +48,7 @@ export interface ChartSeries {
 /** 构建延迟图表数据 + 丢包标记集合 */
 export function buildLatencyChart(rows: TaskQueryResult[], type: LatencyType) {
   const names = seriesNames(rows)
-  const series: ChartSeries[] = names.map(name => ({ name, color: latencyColor(name) }))
+  const series: ChartSeries[] = names.map((name, i) => ({ name, color: seriesColor(i) }))
   const byTs = new Map<number, ChartPoint>()
   const lossPoints = new Set<string>() // "t-sourceName" 格式
 
@@ -70,22 +68,7 @@ export function buildLatencyChart(rows: TaskQueryResult[], type: LatencyType) {
 
   const data = [...byTs.values()].sort((a, b) => a.t - b.t)
 
-  // 图上显示值: ping / tcp_ping 超过 500ms 时封顶到 500，连在顶边
-  const displayData: DisplayChartPoint[] = data.map(pt => {
-    const next: DisplayChartPoint = { t: pt.t }
-    for (const name of names) {
-      const v = pt[name]
-      if (typeof v !== 'number') {
-        next[name] = v
-        continue
-      }
-      if ((type === 'ping' || type === 'tcp_ping') && v > 500) next[name] = 500
-      else next[name] = v
-    }
-    return next
-  })
-
-  return { data, displayData, series, lossPoints }
+  return { data, series, lossPoints }
 }
 
 export interface LatencyStats {
@@ -97,7 +80,7 @@ export interface LatencyStats {
 }
 
 export function computeLatencyStats(rows: TaskQueryResult[], type: LatencyType): LatencyStats[] {
-  const stats = seriesNames(rows).map<LatencyStats>(name => {
+  const stats = seriesNames(rows).map<LatencyStats>((name, i) => {
     const list = rows.filter(r => (r.cron_source || '未知') === name)
     const vals: number[] = []
     for (const r of list) {
@@ -105,7 +88,7 @@ export function computeLatencyStats(rows: TaskQueryResult[], type: LatencyType):
       if (v != null) vals.push(v)
     }
 
-    const color = latencyColor(name)
+    const color = seriesColor(i)
     const lossRate = list.length ? ((list.length - vals.length) / list.length) * 100 : 0
     if (!vals.length) return { name, color, avg: null, jitter: null, lossRate }
 
@@ -142,34 +125,45 @@ export interface LatencyDomain {
   max: number | null
 }
 
+function niceCeil(v: number, step: number) {
+  return Math.ceil(v / step) * step
+}
+
 /**
- * 自适应 Y 轴上限:取数据 p95 值的 1.6 倍(向上取整到 50ms),不低于 50ms。
- * 超过硬上限的超时/离群点裁顶,并返回越界次数用于提示。
+ * 自适应 Y 轴上限:按"每个来源各自的 p95"取最慢来源为基准(而非所有采样混合,
+ * 否则会被低延迟高频来源拉低),确保多数来源完整可见;个别离群来源由硬上限兜底。
+ * 返回越界(被裁顶)采样数与峰值用于角标提示。
  */
 export function latencyYDomain(data: ChartPoint[] | DisplayChartPoint[], names: string[], type: LatencyType): LatencyDomain {
-  const cap = TYPE_Y_CAP[type] ?? 2000
-  const vals: number[] = []
+  const hard = TYPE_Y_CAP[type] ?? 2000
+  const step = type === 'http_ping' ? 100 : 25
+  const floor = type === 'http_ping' ? 100 : 20
+  const perSeriesP95: number[] = []
+  let max = 0
+  for (const n of names) {
+    const vals: number[] = []
+    for (const pt of data) {
+      const v = pt[n]
+      if (typeof v === 'number') {
+        vals.push(v)
+        if (v > max) max = v
+      }
+    }
+    if (!vals.length) continue
+    vals.sort((a, b) => a - b)
+    perSeriesP95.push(vals[Math.min(vals.length - 1, Math.floor(vals.length * 0.95))])
+  }
+  if (!perSeriesP95.length) return { domain: [0, floor], cap: floor, outliers: 0, max: null }
+
+  const hiP95 = Math.max(...perSeriesP95)
+  const adaptive = Math.max(floor, Math.min(hard, niceCeil(hiP95 * 1.15, step)))
+  let outliers = 0
   for (const pt of data) {
     for (const n of names) {
       const v = pt[n]
-      if (typeof v === 'number') vals.push(v)
+      if (typeof v === 'number' && v > adaptive) outliers++
     }
   }
-  if (!vals.length) return { domain: [0, cap], cap, outliers: 0, max: null }
-
-  const max = Math.max(...vals)
-
-  // TCP Ping / Ping 固定 500，高度不再动态缩放
-  if (type === 'ping' || type === 'tcp_ping') {
-    const outliers = vals.filter(v => v > cap).length
-    return { domain: [0, 500], cap: 500, outliers, max }
-  }
-
-  // HTTP Ping 保持自适应
-  const sorted = [...vals].sort((a, b) => a - b)
-  const p95 = sorted[Math.floor(sorted.length * 0.95)]
-  const adaptive = Math.max(50, Math.min(cap, Math.ceil(p95 * 1.6 / 50) * 50))
-  const outliers = vals.filter(v => v > adaptive).length
   return { domain: [0, adaptive], cap: adaptive, outliers, max }
 }
 

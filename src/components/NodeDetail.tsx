@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import {
   Area,
@@ -26,7 +26,9 @@ import {
   computeLatencyStats,
   latencyQuality,
   latencyYDomain,
+  seriesColor,
   type ChartPoint,
+  type ChartSeries,
   type LatencyStats,
 } from '../utils/latency'
 import { streamUnlockToneClass, type StreamUnlockView } from '../hooks/useStreamUnlocks'
@@ -60,6 +62,24 @@ export function NodeDetail({ node, onClose, showSource, pool, unlocks = [] }: Pr
   const scrollRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const [stuck, setStuck] = useState(false)
+
+  // 三个延迟图共享的「来源→颜色」映射,保证同一来源跨图同色(按来源名全局排序分配)
+  const [seriesColors, setSeriesColors] = useState<Map<string, string>>(() => new Map())
+  useEffect(() => {
+    setSeriesColors(new Map())
+  }, [node?.uuid])
+  const registerSeries = useCallback((names: string[]) => {
+    setSeriesColors(prev => {
+      const keys = new Set(prev.keys())
+      let added = false
+      for (const n of names) if (!keys.has(n)) { keys.add(n); added = true }
+      if (!added) return prev
+      const sorted = [...keys].sort((a, b) => a.localeCompare(b))
+      const next = new Map<string, string>()
+      sorted.forEach((n, i) => next.set(n, seriesColor(i)))
+      return next
+    })
+  }, [])
 
   useEffect(() => {
     if (!node) return
@@ -214,6 +234,8 @@ export function NodeDetail({ node, onClose, showSource, pool, unlocks = [] }: Pr
           pool={pool}
           source={node.source ?? null}
           uuid={node.uuid}
+          colorMap={seriesColors}
+          onSeries={registerSeries}
         />
         <LatencyBlock
           title="Ping"
@@ -221,6 +243,8 @@ export function NodeDetail({ node, onClose, showSource, pool, unlocks = [] }: Pr
           pool={pool}
           source={node.source ?? null}
           uuid={node.uuid}
+          colorMap={seriesColors}
+          onSeries={registerSeries}
         />
         <LatencyBlock
           title="HTTP Ping"
@@ -228,6 +252,8 @@ export function NodeDetail({ node, onClose, showSource, pool, unlocks = [] }: Pr
           pool={pool}
           source={node.source ?? null}
           uuid={node.uuid}
+          colorMap={seriesColors}
+          onSeries={registerSeries}
           hideWhenEmpty
         />
 
@@ -408,11 +434,31 @@ interface LatencyBlockProps {
   pool: BackendPool | null
   source: string | null
   uuid: string
+  colorMap: Map<string, string>
+  onSeries: (names: string[]) => void
   hideWhenEmpty?: boolean
 }
 
 const ms = (v: number) => `${v.toFixed(1)} ms`
 const slug = (name: string) => name.replace(/[^a-zA-Z0-9_-]/g, '_')
+
+/** 二分定位离 label 时间最近的一次采样 */
+function nearestSample(
+  arr: { t: number; v: number }[] | undefined,
+  label: number,
+): { t: number; v: number } | null {
+  if (!arr || !arr.length) return null
+  let lo = 0
+  let hi = arr.length - 1
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1
+    if (arr[mid].t < label) lo = mid + 1
+    else hi = mid
+  }
+  let best = arr[lo]
+  if (lo > 0 && Math.abs(arr[lo - 1].t - label) < Math.abs(best.t - label)) best = arr[lo - 1]
+  return best
+}
 
 function lastValue(data: ReturnType<typeof buildLatencyChart>['data'], name: string): number | null {
   for (let i = data.length - 1; i >= 0; i--) {
@@ -422,7 +468,7 @@ function lastValue(data: ReturnType<typeof buildLatencyChart>['data'], name: str
   return null
 }
 
-function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: LatencyBlockProps) {
+function LatencyBlock({ title, type, pool, source, uuid, colorMap, onSeries, hideWhenEmpty }: LatencyBlockProps) {
   const lossKey = `nodeget-loss-lines-${type}`
   const [rangeIdx, setRangeIdx] = useState(1) // 默认 1 小时,各图独立
   const [showLossLines, setShowLossLines] = useState(() => {
@@ -435,10 +481,24 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
   const range = LATENCY_RANGES[rangeIdx]
   const { rows, loading } = useNodeLatency(pool, source, uuid, type, range.ms)
 
-  const { data, displayData, series, lossPoints } = useMemo(() => buildLatencyChart(rows, type), [rows, type])
-  const stats = useMemo(() => computeLatencyStats(rows, type), [rows, type])
+  const { data, series: rawSeries, lossPoints } = useMemo(() => buildLatencyChart(rows, type), [rows, type])
+  const rawStats = useMemo(() => computeLatencyStats(rows, type), [rows, type])
+  // 上报本图来源给上层,换取跨三图统一的配色
+  useEffect(() => {
+    if (rawSeries.length) onSeries(rawSeries.map(s => s.name))
+  }, [rawSeries, onSeries])
+  const series = useMemo(
+    () => rawSeries.map(s => ({ ...s, color: colorMap.get(s.name) ?? s.color })),
+    [rawSeries, colorMap],
+  )
+  const stats = useMemo(
+    () => rawStats.map(s => ({ ...s, color: colorMap.get(s.name) ?? s.color })),
+    [rawStats, colorMap],
+  )
   const [hidden, setHidden] = useState<Set<string>>(() => new Set())
   const [hoveredSeries, setHoveredSeries] = useState<string | null>(null)
+  const [nearSeries, setNearSeries] = useState<string | null>(null)
+  const chartBoxRef = useRef<HTMLDivElement>(null)
   const empty = data.length === 0
 
   const visibleSeries = series.filter(s => !hidden.has(s.name))
@@ -448,6 +508,112 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
     () => latencyYDomain(data, focusedSeries.map(s => s.name), type),
     [data, focusedSeries, type],
   )
+
+  // 显示值: 超出自适应上限的离群点封顶,连在顶边(不破坏曲线连续性)
+  const displayData = useMemo(() => {
+    const names = series.map(s => s.name)
+    return data.map(pt => {
+      const next: ChartPoint = { t: pt.t }
+      for (const n of names) {
+        const v = pt[n]
+        next[n] = typeof v === 'number' ? Math.min(v, yd.cap) : v
+      }
+      return next
+    })
+  }, [data, series, yd.cap])
+
+  // 各来源采样在不同毫秒戳上报,几乎从不落在同一个 t;
+  // 为 tooltip 预建每来源升序序列,hover 时二分取"该时刻最近一次采样",从而一次性展示全部来源
+  const seriesSamples = useMemo(() => {
+    const m = new Map<string, { t: number; v: number }[]>()
+    for (const s of series) m.set(s.name, [])
+    for (const pt of data) {
+      for (const s of series) {
+        const v = pt[s.name]
+        if (typeof v === 'number') m.get(s.name)!.push({ t: pt.t, v })
+      }
+    }
+    return m
+  }, [data, series])
+
+  // tooltip 容差: 约单来源平均采样间隔的 2.5 倍,超出则该来源在此刻视为无数据
+  const tolerance = useMemo(() => {
+    if (data.length < 2) return 60_000
+    const span = data[data.length - 1].t - data[0].t
+    const perSeries = data.length / Math.max(1, series.length)
+    return Math.max(20_000, (span / Math.max(1, perSeries)) * 2.5)
+  }, [data, series.length])
+
+  // 高亮目标: 表格行 hover(聚焦,改 Y 轴+填充) 优先于 图区 hover(仅高亮最近线)
+  const active = hoveredSeries ?? nearSeries
+  const activeColor = active ? visibleSeries.find(s => s.name === active)?.color ?? '#94a3b8' : null
+  const activeLast = active ? lastValue(data, active) : null
+
+  // 图区 hover: 用鼠标对应的延迟值找最近来源高亮,不改 Y 轴、不填充
+  const handleChartMove = (state: any) => {
+    if (!state || state.activeLabel == null) return
+    const t = state.activeLabel as number
+    // 鼠标对应的延迟值: 优先 Recharts 的 yValue, 否则用 chartY + plot 几何反算
+    let my: number | null = typeof state.yValue === 'number' ? state.yValue : null
+    if (my == null && typeof state.chartY === 'number' && chartBoxRef.current) {
+      const h = chartBoxRef.current.clientHeight
+      const plotH = h - 10 - 30 // 减 margin.top 与 XAxis 高度估计
+      if (plotH > 0) my = yd.cap * (1 - (state.chartY - 10) / plotH)
+    }
+    if (my == null) return
+    let best: string | null = null
+    let bestD = Infinity
+    for (const s of visibleSeries) {
+      const near = nearestSample(seriesSamples.get(s.name), t)
+      if (!near) continue
+      const d = Math.abs(near.v - my)
+      if (d < bestD) {
+        bestD = d
+        best = s.name
+      }
+    }
+    setNearSeries(prev => (prev === best ? prev : best))
+  }
+
+  // 触屏: 容器上绑原生 touch(passive:false 才能 preventDefault 防止滑动时页面滚动)
+  const touchRef = useRef({ data, cap: yd.cap, visibleSeries, seriesSamples })
+  touchRef.current = { data, cap: yd.cap, visibleSeries, seriesSamples }
+  useEffect(() => {
+    const el = chartBoxRef.current
+    if (!el) return
+    const onTouch = (e: TouchEvent) => {
+      const touch = e.touches[0]
+      const { data, cap, visibleSeries, seriesSamples } = touchRef.current
+      if (!touch || data.length === 0) return
+      const rect = el.getBoundingClientRect()
+      const plotLeft = 46
+      const plotW = rect.width - plotLeft - 12
+      const plotH = rect.height - 40
+      if (plotW <= 0 || plotH <= 0) return
+      const frac = Math.max(0, Math.min(1, (touch.clientX - rect.left - plotLeft) / plotW))
+      const t = data[0].t + frac * (data[data.length - 1].t - data[0].t)
+      const my = cap * (1 - (touch.clientY - rect.top - 10) / plotH)
+      let best: string | null = null
+      let bestD = Infinity
+      for (const s of visibleSeries) {
+        const near = nearestSample(seriesSamples.get(s.name), t)
+        if (!near) continue
+        const d = Math.abs(near.v - my)
+        if (d < bestD) {
+          bestD = d
+          best = s.name
+        }
+      }
+      setNearSeries(prev => (prev === best ? prev : best))
+      if (e.type === 'touchmove') e.preventDefault()
+    }
+    el.addEventListener('touchstart', onTouch, { passive: false })
+    el.addEventListener('touchmove', onTouch, { passive: false })
+    return () => {
+      el.removeEventListener('touchstart', onTouch)
+      el.removeEventListener('touchmove', onTouch)
+    }
+  }, [])
 
   const toggle = (name: string) =>
     setHidden(prev => {
@@ -465,8 +631,8 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
   const q = latencyQuality(headline)
   const avgForRef = single ? (stats.find(s => s.name === focusedSeries[0].name)?.avg ?? null) : null
   const lastT = data.length ? data[data.length - 1].t : null
-  const chartHeadline = headline != null && (type === 'ping' || type === 'tcp_ping') ? Math.min(headline, 500) : headline
-  const chartAvgForRef = avgForRef != null && (type === 'ping' || type === 'tcp_ping') ? Math.min(avgForRef, 500) : avgForRef
+  const chartHeadline = headline != null ? Math.min(headline, yd.cap) : headline
+  const chartAvgForRef = avgForRef != null ? Math.min(avgForRef, yd.cap) : avgForRef
 
   useEffect(() => {
     try {
@@ -533,7 +699,7 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
         </div>
       </div>
 
-      <div className="relative h-72 sm:h-80">
+      <div ref={chartBoxRef} className="relative h-72 sm:h-80">
         {empty && (
           <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
             {loading ? '加载中…' : `暂无 ${type} 数据`}
@@ -541,7 +707,12 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
         )}
         {!empty && (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={displayData} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+            <AreaChart
+              data={displayData}
+              margin={{ top: 10, right: 12, left: 0, bottom: 0 }}
+              onMouseMove={handleChartMove}
+              onMouseLeave={() => setNearSeries(null)}
+            >
               <defs>
                 {visibleSeries.map(s => {
                   const isFocused = !hoveredSeries || s.name === hoveredSeries
@@ -573,16 +744,27 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
                 tickMargin={8}
               />
               <YAxis
-                tickFormatter={v => `${v}`}
+                tickFormatter={v => `${v}ms`}
                 tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                 tickLine={false}
                 axisLine={false}
-                width={40}
+                width={46}
                 tickCount={5}
                 domain={yd.domain}
                 allowDataOverflow
               />
-              <Tooltip content={<LatencyTooltip rawData={data} />} cursor={{ stroke: 'hsl(var(--primary))', strokeOpacity: 0.25, strokeWidth: 1 }} />
+              <Tooltip
+                content={
+                  <LatencyTooltip
+                    samples={seriesSamples}
+                    series={visibleSeries}
+                    tolerance={tolerance}
+                    hovered={active}
+                  />
+                }
+                cursor={{ stroke: 'hsl(var(--primary))', strokeOpacity: 0.2, strokeWidth: 1, strokeDasharray: '4 4' }}
+                isAnimationActive={false}
+              />
               {chartAvgForRef != null && (
                 <ReferenceLine
                   y={chartAvgForRef}
@@ -592,31 +774,39 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
                   label={{ value: `均 ${avgForRef.toFixed(0)}ms`, fontSize: 10, fill: visibleSeries[0].color, position: 'right' }}
                 />
               )}
-              {visibleSeries.map(s => {
-                const dimmed = !!hoveredSeries && s.name !== hoveredSeries
-                const focused = !hoveredSeries || s.name === hoveredSeries
-                return (
-                  <Area
-                    key={s.name}
-                    type="monotoneX"
-                    dataKey={s.name}
-                    stroke={s.color}
-                    strokeOpacity={dimmed ? 0.16 : 1}
-                    strokeWidth={single ? 2.4 : focused ? 2.8 : 1.4}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    fill={single && focused ? `url(#lat-${slug(s.name)})` : 'none'}
-                    fillOpacity={single && focused ? 1 : 0}
-                    connectNulls
-                    isAnimationActive={false}
-                    activeDot={{ r: 4, fill: s.color, stroke: 'hsl(var(--background))', strokeWidth: 2 }}
-                    dot={false}
-                  />
-                )
-              })}
-              {/* 丢包标记:顶部细红线，可手动开关 */}
+              {[...visibleSeries]
+                .sort((a, b) => (a.name === active ? 1 : 0) - (b.name === active ? 1 : 0))
+                .map(s => {
+                  const isActive = s.name === active
+                  const dimmed = !!active && !isActive
+                  const many = visibleSeries.length > 4
+                  // 高亮线加粗置顶,其余压暗;无高亮时多来源用细线避免糊成一团
+                  const width = active ? (isActive ? 2.8 : 1) : single ? 2.4 : many ? 1.4 : 2
+                  // 填充只在表格行聚焦(单来源)时出现,图区 hover 仅高亮不填充
+                  const filled = single && s.name === hoveredSeries
+                  return (
+                    <Area
+                      key={s.name}
+                      type="monotoneX"
+                      dataKey={s.name}
+                      stroke={s.color}
+                      strokeOpacity={dimmed ? 0.1 : 1}
+                      strokeWidth={width}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill={filled ? `url(#lat-${slug(s.name)})` : 'none'}
+                      fillOpacity={filled ? 1 : 0}
+                      connectNulls
+                      isAnimationActive={false}
+                      activeDot={{ r: 4, fill: s.color, stroke: 'hsl(var(--background))', strokeWidth: 2 }}
+                      dot={false}
+                    />
+                  )
+                })}
+              {/* 丢包标记:顶部细红线，可手动开关;跟随高亮线联动 */}
               {showLossLines && visibleSeries.map(s => {
-                const dimmed = !!hoveredSeries && s.name !== hoveredSeries
+                const isActive = s.name === active
+                const dimmed = !!active && !isActive
                 return data
                   .filter(pt => pt[s.name] == null && lossPoints?.has(`${pt.t}-${s.name}`))
                   .map(pt => (
@@ -624,8 +814,8 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
                       key={`loss-${s.name}-${pt.t}`}
                       x={pt.t}
                       stroke="#ef4444"
-                      strokeOpacity={dimmed ? 0.16 : 0.5}
-                      strokeWidth={dimmed ? 0.8 : 1.25}
+                      strokeOpacity={dimmed ? 0.07 : isActive ? 0.75 : 0.5}
+                      strokeWidth={dimmed ? 0.6 : isActive ? 1.5 : 1.25}
                     />
                   ))
               })}
@@ -643,6 +833,17 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
               )}
             </AreaChart>
           </ResponsiveContainer>
+        )}
+        {!empty && active && (
+          <div className="pointer-events-none absolute right-2 top-1.5 z-10 flex items-center gap-1.5 rounded-md border border-border/50 bg-popover/90 px-2 py-1 text-[11px] font-medium shadow-sm backdrop-blur">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: activeColor ?? undefined }} />
+            <span className="max-w-[160px] truncate">{active}</span>
+            {activeLast != null && (
+              <span className="font-mono tabular-nums" style={{ color: activeColor ?? undefined }}>
+                {activeLast.toFixed(1)}ms
+              </span>
+            )}
+          </div>
         )}
         {!empty && yd.outliers > 0 && (
           <div className="pointer-events-none absolute left-11 top-0.5 rounded bg-rose-500/12 px-1.5 py-0.5 text-[10px] font-mono text-rose-400/90">
@@ -684,38 +885,54 @@ function LatencyBlock({ title, type, pool, source, uuid, hideWhenEmpty }: Latenc
   )
 }
 
-function LatencyTooltip({ active, payload, label, rawData }: {
+function LatencyTooltip({ active, label, samples, series, tolerance, hovered }: {
   active?: boolean
-  payload?: Array<{ name: string; value: number; color: string }>
   label?: number
-  rawData: ChartPoint[]
+  samples: Map<string, { t: number; v: number }[]>
+  series: ChartSeries[]
+  tolerance: number
+  hovered: string | null
 }) {
-  if (!active || !payload?.length) return null
-  const rawPoint = label != null ? rawData.find(p => p.t === label) : undefined
-  const rows = payload
-    .filter(p => p.value != null)
-    .map(p => {
-      const rawValue = rawPoint?.[p.name]
-      return {
-        ...p,
-        value: typeof rawValue === 'number' ? rawValue : p.value,
-      }
-    })
-    .sort((a, b) => a.value - b.value)
+  if (!active || label == null) return null
+  // 对每个来源二分定位"离 hover 时刻最近的一次采样",一次性展示全部来源
+  const rows: { name: string; color: string; value: number; near: boolean }[] = []
+  for (const s of series) {
+    const near = nearestSample(samples.get(s.name), label)
+    if (!near) continue
+    const dist = Math.abs(near.t - label)
+    if (dist <= tolerance) rows.push({ name: s.name, color: s.color, value: near.v, near: dist > 2000 })
+  }
+  if (!rows.length) return null
+  // 当前高亮来源置顶,其余按延迟升序
+  rows.sort((a, b) => {
+    if (a.name === hovered && b.name !== hovered) return -1
+    if (b.name === hovered && a.name !== hovered) return 1
+    return a.value - b.value
+  })
+
   return (
-    <div className="rounded-lg border border-border/60 bg-popover/95 backdrop-blur px-3 py-2 shadow-xl text-xs">
-      <div className="text-[10px] text-muted-foreground mb-1.5 font-mono">
-        {label != null ? new Date(label).toLocaleTimeString() : ''}
+    <div className="rounded-lg border border-border/60 bg-popover/95 backdrop-blur px-3 py-2 shadow-xl text-xs max-h-[55vh] overflow-auto">
+      <div className="flex items-baseline justify-between gap-3 mb-1.5">
+        <span className="text-[10px] text-muted-foreground font-mono">
+          {new Date(label).toLocaleTimeString()}
+        </span>
+        <span className="text-[10px] text-muted-foreground">{rows.length} 来源</span>
       </div>
       <div className="space-y-1">
         {rows.map(p => {
           const q = latencyQuality(p.value)
           return (
-            <div key={p.name} className="flex items-center gap-2">
+            <div
+              key={p.name}
+              className={cn(
+                'flex items-center gap-2 rounded px-1 -mx-1',
+                hovered === p.name && 'bg-muted/70 font-semibold',
+              )}
+            >
               <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ background: p.color }} />
-              <span className="truncate max-w-[120px]">{p.name}</span>
+              <span className="truncate max-w-[140px]">{p.name}</span>
               <span className="ml-auto font-mono tabular-nums" style={{ color: q.color }}>
-                {p.value.toFixed(1)}ms
+                {p.value.toFixed(1)}ms{p.near ? '~' : ''}
               </span>
             </div>
           )
