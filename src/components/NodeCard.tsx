@@ -62,7 +62,7 @@ function NodeCardInner({ node, cardStyle = 'glass', showPrice = true, showExpire
       <Card
         className={cn(
           cardClass,
-          'card-hud relative p-4 flex flex-col gap-3.5 h-full',
+          'card-hud relative p-3 sm:p-4 flex flex-col gap-3 sm:gap-3.5 h-full',
           pinned && 'ring-1 ring-primary/40',
           !node.online && 'opacity-50 grayscale-[0.3]',
         )}

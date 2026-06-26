@@ -296,7 +296,7 @@ function AppInner() {
       searchRef={searchRef}
     />
 
-      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-3 sm:px-6 py-3 sm:py-6 space-y-3 sm:space-y-4">
         {/* Global Status Bar */}
         {hasVisibleNodes && <GlobalStatusBar nodes={nodes} />}
 
@@ -344,7 +344,7 @@ function AppInner() {
 
         {/* Cards View */}
         {!empty && view === 'cards' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 stagger-children">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 stagger-children">
             {list.map(n => (
               <div key={n.uuid} className="animate-slide-up relative">
                 {compareMode && (
@@ -445,7 +445,7 @@ function AppInner() {
 
 function SkeletonGrid() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
       {Array.from({ length: 10 }).map((_, i) => (
         <div
           key={i}

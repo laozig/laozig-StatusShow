@@ -48,7 +48,7 @@ function Btn({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`relative z-10 inline-flex items-center justify-center gap-1.5 px-3 py-1 text-sm font-medium rounded-sm transition-colors ${
+      className={`relative z-10 inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-1 text-sm font-medium rounded-sm transition-colors ${
         active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
       }`}
     >

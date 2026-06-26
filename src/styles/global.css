@@ -72,9 +72,17 @@
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
   }
+  html {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
   body {
     @apply bg-background text-foreground font-sans;
     -webkit-font-smoothing: antialiased;
+    min-height: 100%;
+    overscroll-behavior: none;
   }
   *::-webkit-scrollbar {
     width: 8px;
@@ -104,6 +112,13 @@
     radial-gradient(45rem 30rem at 5% 90%, var(--bg-blob-4), transparent 60%);
   background-attachment: fixed;
   transition: background-color 0.4s ease;
+}
+/* iOS Safari 不支持 background-attachment:fixed,改为 scroll 避免回弹抖动 */
+@supports (-webkit-touch-callout: none) {
+  .bg-soft { background-attachment: scroll; }
+}
+@media (max-width: 768px) {
+  .bg-soft { background-attachment: scroll; }
 }
 
 /* Glassmorphism card —— 背景跟随主题 --card,确保所有主题/明暗下玻璃面板都正确 */
@@ -1674,4 +1689,17 @@ kbd {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ===== 移动端适配 ===== */
+@media (max-width: 640px) {
+  /* 主题装饰伪元素(城垛/远山/废墟)在小屏降低高度、降低不透明度 */
+  .bg-soft::before { height: 80px !important; opacity: 0.5 !important; }
+  .bg-soft::after { opacity: 0.03 !important; }
+  /* 卡片 hover 位移在触屏无意义,去掉防止触摸后卡片"飘走" */
+  .card-glass:hover,
+  .card-classic:hover,
+  .card-minimal:hover { transform: none !important; }
+  /* GlobalStatusBar 横滚提示 */
+  .card-glass { -webkit-overflow-scrolling: touch; }
 }

@@ -47,21 +47,21 @@ export function GlobalStatusBar({ nodes }: Props) {
   if (stats.total === 0) return null
 
   return (
-    <div className="card-glass rounded-xl px-4 py-2.5 flex items-center gap-4 text-xs font-mono overflow-x-auto">
+    <div className="card-glass rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-4 text-xs font-mono overflow-x-auto">
       {/* Health indicator */}
-      <div className={cn('flex items-center gap-2 px-3 py-1.5 rounded-lg shrink-0', healthBg)}>
-        <Zap className={cn('h-3.5 w-3.5', healthColor)} />
+      <div className={cn('flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg shrink-0', healthBg)}>
+        <Zap className={cn('h-3 sm:h-3.5 w-3 sm:w-3.5', healthColor)} />
         <span className={cn('font-bold', healthColor)}>
           {stats.health.toFixed(0)}%
         </span>
-        <span className="text-muted-foreground">健康度</span>
+        <span className="text-muted-foreground hidden sm:inline">健康度</span>
       </div>
 
       {/* Divider */}
-      <div className="w-px h-5 bg-border shrink-0" />
+      <div className="w-px h-4 sm:h-5 bg-border shrink-0 hidden sm:block" />
 
       {/* Online/Offline */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         <span className="inline-flex items-center gap-1 text-emerald-400">
           <Activity className="h-3 w-3" />
           {stats.online}
@@ -73,10 +73,10 @@ export function GlobalStatusBar({ nodes }: Props) {
         </span>
       </div>
 
-      <div className="w-px h-5 bg-border shrink-0" />
+      <div className="w-px h-4 sm:h-5 bg-border shrink-0 hidden sm:block" />
 
       {/* Network speed */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         <span className="inline-flex items-center gap-1 text-cyan-400">
           <ArrowDown className="h-3 w-3" />
           {bytes(stats.netInSum)}/s
@@ -87,12 +87,13 @@ export function GlobalStatusBar({ nodes }: Props) {
         </span>
       </div>
 
-      <div className="w-px h-5 bg-border shrink-0" />
-
-      {/* Total throughput */}
-      <span className="text-muted-foreground shrink-0">
-        ↑↓ {bytes(stats.netInSum + stats.netOutSum)}/s
-      </span>
+      {/* Total throughput - hide on mobile */}
+      <div className="hidden sm:contents">
+        <div className="w-px h-5 bg-border shrink-0" />
+        <span className="text-muted-foreground shrink-0">
+          ↑↓ {bytes(stats.netInSum + stats.netOutSum)}/s
+        </span>
+      </div>
 
       {/* Live dot */}
       <div className="ml-auto flex items-center gap-1.5 shrink-0">
