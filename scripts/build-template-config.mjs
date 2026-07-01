@@ -16,4 +16,17 @@ const userConfigPath = resolve(projectRoot, 'dist/config.json')
 
 // 写入主题 JSON 文件
 writeFileSync(themeConfigPath, JSON.stringify(themeTemplate, null, 2) + '\n', 'utf-8')
-writeFileSync(userConfigPath, JSON.stringify(defaultConfig, null, 2) + '\n', 'utf-8')
+
+// 写入占位 config.json（随主题包发布，site_tokens 用占位符，不泄露真实凭据）
+const placeholderConfig = {
+  user_preferences: defaultConfig.user_preferences,
+  site_tokens: [
+    {
+      name: "placeholder",
+      backend_url: "wss://your-backend.example.com",
+      token: "YOUR_TOKEN_HERE"
+    }
+  ]
+}
+writeFileSync(userConfigPath, JSON.stringify(placeholderConfig, null, 2) + '\n', 'utf-8')
+console.log('[build-template-config] wrote placeholder config.json (site_tokens masked)')

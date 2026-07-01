@@ -31,8 +31,15 @@ archive.on('error', err => {
 // 关联输出流
 archive.pipe(zipOutput)
 
-// 添加整个 dist 文件夹到压缩包根目录
-archive.directory('dist/', false)
+// 添加 dist 文件夹到压缩包根目录，但排除真实 config.json（含 token）
+// config.json 已在 build-template-config.mjs 中写入占位版本，安全随包发布
+archive.directory('dist/', false, (entry) => {
+  // 排除 zip 自身和真实配置文件（build-config.mjs 写入的 config.real.json）
+  if (entry.name === 'NodeGet-StatusShow.zip' || entry.name === 'config.real.json') {
+    return false
+  }
+  return entry
+})
 
 // 完成压缩
 archive.finalize()

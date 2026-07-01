@@ -175,6 +175,14 @@
     const overallBar = document.getElementById('overall-bar')
     const getRandStr = () => Date.now() + '-' + crypto.randomUUID().replaceAll(/-/g, "").slice(10)
 
+    // 需要脱敏的文件：site_tokens 替换为占位符，防止泄露真实凭据
+    const SENSITIVE_FILES = new Set(['config.json'])
+    const PLACEHOLDER_TOKENS = [{
+      name: "placeholder",
+      backend_url: "wss://your-backend.example.com",
+      token: "YOUR_TOKEN_HERE"
+    }]
+
     let fileEntries = []
 
     startBtn.addEventListener('click', async () => {
@@ -219,15 +227,32 @@
       startBtn.disabled = false
     })
 
-    // 下载文件带重试
+    // 下载文件带重试（对 config.json 等敏感文件自动脱敏）
     async function downloadFileWithRetry(path, retries, zip, statusEl, progressCallback) {
       for (let i = 0; i < retries; i++) {
         try {
           statusEl.textContent = '下载中...'
           const res = await fetch(path + '?_=' + getRandStr())
           if (!res.ok) throw new Error(`HTTP ${res.status}`)
-          const blob = await res.blob()
-          zip.file(path, blob)
+
+          // 对 config.json 脱敏：site_tokens 替换为占位符，防止泄露真实凭据
+          if (SENSITIVE_FILES.has(path)) {
+            const text = await res.text()
+            try {
+              const config = JSON.parse(text)
+              if (config.site_tokens && Array.isArray(config.site_tokens)) {
+                config.site_tokens = PLACEHOLDER_TOKENS
+              }
+              zip.file(path, JSON.stringify(config, null, 2) + '\n')
+            } catch (e) {
+              // JSON 解析失败则原样放入（不应发生）
+              zip.file(path, text)
+            }
+          } else {
+            const blob = await res.blob()
+            zip.file(path, blob)
+          }
+
           statusEl.textContent = '完成'
           progressCallback()
           return
